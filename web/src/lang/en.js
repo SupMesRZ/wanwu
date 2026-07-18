@@ -65,7 +65,7 @@ export default {
   },
   menu: {
     generalAgent: 'General Agent',
-    wga: 'WanwuBot',
+    wga: 'Hermes Agent',
     aiAssistant: 'OpenClaw',
     ontologyAgent: 'Ontology Agent',
     dataConnect: 'Data Connect',
@@ -116,7 +116,7 @@ export default {
     skillSquare: 'Skill广场',
   },
   header: {
-    title: '智能体平台',
+    title: 'HBU Hermes Agent Platform',
     doc: '文档中心',
     logout: '登出',
     login: '登录',
@@ -1963,7 +1963,7 @@ export default {
     edit: '编辑OAuth密钥',
     deleteHint: '确定要删除该OAuth密钥吗？',
     popup: {
-      title: '使用元景万悟账号登录',
+      title: 'Sign in with your HBU Hermes Agent Platform account',
       perm: '将获得以下权限：',
       detail: '访问您的个人资料（包括用户名、头像）等基础信息',
     },
@@ -2154,7 +2154,7 @@ export default {
       search: 'Search',
     },
     header: {
-      welcomeTitle: '你好，我是万悟',
+      welcomeTitle: "Hello, I'm HBU Hermes Agent",
       config: '配置',
       importSkill: 'Import Skill',
       uploadFile: '上传文件',

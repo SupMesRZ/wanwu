@@ -65,7 +65,7 @@ export default {
   },
   menu: {
     generalAgent: '通用智能体',
-    wanwuAgent: 'WanwuBot',
+    wanwuAgent: 'Hermes 智能体',
     aiAssistant: 'OpenClaw',
     ontologyAgent: '本体智能体',
     dataConnect: '数据连接',
@@ -117,7 +117,7 @@ export default {
     skillSquare: 'Skill广场',
   },
   header: {
-    title: '智能体平台',
+    title: '河北大学 Hermes 智能体平台',
     doc: '文档中心',
     logout: '登出',
     login: '登录',
@@ -1056,7 +1056,7 @@ export default {
     externalSource: '外部知识库来源',
     externalAPI: {
       title: '外部知识库API',
-      hint: '支持用户通过API关联元景万悟以外的知识库并从中检索知识。',
+      hint: '支持用户通过API关联河北大学 Hermes 智能体平台以外的知识库并从中检索知识。',
       tips: '如何创建并获取外部知识库API',
       name: 'API名称',
       desc: 'API描述',
@@ -2151,7 +2151,7 @@ export default {
     edit: '编辑OAuth密钥',
     deleteHint: '确定要删除该OAuth密钥吗？',
     popup: {
-      title: '使用元景万悟账号登录',
+      title: '使用河北大学 Hermes 智能体平台账号登录',
       perm: '将获得以下权限：',
       detail: '访问您的个人资料（包括用户名、头像）等基础信息',
     },
@@ -2392,7 +2392,7 @@ export default {
       search: '搜索',
     },
     header: {
-      welcomeTitle: '你好，我是万悟',
+      welcomeTitle: '你好，我是河北大学 Hermes 智能体',
       config: '配置',
       importSkill: '导入Skill',
       uploadFile: '上传文件',
