@@ -123,6 +123,9 @@ export default {
     login: '登录',
     org: {
       placeholder: '选择组织',
+      current: '当前组织',
+      noSelection: '未选择组织',
+      switch: '切换组织',
     },
     noData: '暂无匹配内容',
   },

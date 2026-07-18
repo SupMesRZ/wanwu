@@ -24,40 +24,6 @@
               />
             </div>
           </div>
-          <!-- 组织切换 -->
-          <div class="menu-org-select-wrapper" v-if="!isCollapse">
-            <img style="width: 16px" src="@/assets/imgs/org_user.svg" alt="" />
-            <ChangeOrg
-              :org="org"
-              :orgList="orgList"
-              :getCurrentOrgName="getCurrentOrgName"
-              :changeOrg="changeOrg"
-            />
-          </div>
-          <el-popover
-            v-else
-            popper-class="menu-org-popover"
-            placement="right"
-            width="220"
-            trigger="click"
-          >
-            <ChangeOrg
-              :org="org"
-              :orgList="orgList"
-              :getCurrentOrgName="getCurrentOrgName"
-              :changeOrg="changeOrg"
-            />
-            <div slot="reference">
-              <div style="text-align: center; cursor: pointer">
-                <img
-                  class="menu-org-popover-icon"
-                  src="@/assets/imgs/org_user.svg"
-                  alt=""
-                />
-              </div>
-            </div>
-          </el-popover>
-          <div v-if="isCollapse" class="collapse-menu-divider"></div>
         </div>
         <div @mouseenter="menuHover = true" @mouseleave="menuHover = false">
           <!-- 菜单 -->
@@ -180,7 +146,49 @@
         <div
           :class="['left-bottom-container', { 'menu-isCollapse': isCollapse }]"
         >
-          <el-popover placement="top" width="220" trigger="click">
+          <el-popover placement="top" width="260" trigger="click">
+            <div class="current-org-section">
+              <div
+                class="current-org-trigger"
+                @click="orgSwitcherExpanded = !orgSwitcherExpanded"
+              >
+                <div class="current-org-content">
+                  <div class="current-org-label">
+                    {{ $t('header.org.current') }}
+                  </div>
+                  <el-tooltip
+                    effect="dark"
+                    :content="
+                      getCurrentOrgName() || $t('header.org.noSelection')
+                    "
+                    placement="top-start"
+                  >
+                    <div class="current-org-name">
+                      {{
+                        getCurrentOrgName() || $t('header.org.noSelection')
+                      }}
+                    </div>
+                  </el-tooltip>
+                </div>
+                <div class="current-org-action">
+                  <span>{{ $t('header.org.switch') }}</span>
+                  <i
+                    :class="[
+                      'el-icon-arrow-down',
+                      { 'is-expanded': orgSwitcherExpanded },
+                    ]"
+                  ></i>
+                </div>
+              </div>
+              <div v-show="orgSwitcherExpanded" class="current-org-switcher">
+                <ChangeOrg
+                  :org="org"
+                  :orgList="orgList"
+                  :getCurrentOrgName="getCurrentOrgName"
+                  :changeOrg="changeOrg"
+                />
+              </div>
+            </div>
             <div
               :class="[
                 'menu--popover-wrap',
@@ -346,6 +354,7 @@ export default {
       version: '',
       orgList: [],
       org: { orgId: '' },
+      orgSwitcherExpanded: false,
       defaultOpeneds: [],
       menuKey: 'menu_key',
       activeIndex: '',
@@ -737,44 +746,21 @@ export default {
           margin: 0 auto;
         }
       }
-      .menu-org-popover-icon {
-        width: 36px;
-        margin-top: 10px;
-        padding: 8px;
-        border-radius: 12px;
-        border: 1px solid #e6e9ed;
-      }
-      .menu-org-select-wrapper ::v-deep {
-        display: flex;
-        align-items: center;
-        margin: 15px 14px 0;
-        border: 1px solid #e6e9ed;
-        border-radius: 12px;
-        padding-left: 12px;
-        .el-select .el-input.is-focus .el-input__inner,
-        .el-input__inner,
-        .el-input__inner:focus {
-          border: none !important;
-          outline: none !important;
-          padding-left: 12px;
-          background-color: rgba(255, 255, 255, 0) !important;
-        }
-      }
     }
 
     .left-aside-container.left-aside-container-isCollapse {
       width: 65px;
       .el-aside.full-menu-aside {
-        height: calc(100vh - 200px) !important;
+        height: calc(100vh - 156px) !important;
       }
     }
 
     /*element ui 样式重写*/
     .el-aside.full-menu-aside {
-      height: calc(100vh - 178px);
+      height: calc(100vh - 134px);
       width: 100% !important;
       border-radius: 10px 0 0 10px;
-      margin-top: 110px;
+      margin-top: 66px;
       position: relative;
       overflow-y: auto;
       overflow-x: hidden;
@@ -938,6 +924,57 @@ export default {
 .menu--popover-wrap {
   border-bottom: 1px solid #ebebeb;
   padding: 4px 0 6px 0;
+}
+.current-org-section {
+  border-bottom: 1px solid #ebebeb;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+.current-org-trigger {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  &:hover {
+    background: #f5f7fa;
+  }
+}
+.current-org-content {
+  min-width: 0;
+  flex: 1;
+}
+.current-org-label {
+  color: #868d9c;
+  font-size: 12px;
+  line-height: 18px;
+}
+.current-org-name {
+  overflow: hidden;
+  color: $menu_text_color;
+  font-size: 13px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.current-org-action {
+  flex-shrink: 0;
+  color: #868d9c;
+  font-size: 12px;
+  white-space: nowrap;
+  .el-icon-arrow-down {
+    margin-left: 3px;
+    transition: transform 0.2s;
+    &.is-expanded {
+      transform: rotate(180deg);
+    }
+  }
+}
+.current-org-switcher {
+  padding: 4px 8px 0;
 }
 .menu--popover-wrap:first-of-type {
   padding-top: 0;
