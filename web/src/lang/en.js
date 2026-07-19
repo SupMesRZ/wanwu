@@ -66,7 +66,8 @@ export default {
   menu: {
     generalAgent: 'General Agent',
     wga: 'Hermes Agent',
-    aiAssistant: 'OpenClaw',
+    wanwuAgent: 'Hermes Agent',
+    aiAssistant: 'Hexiaozhi Agent',
     ontologyAgent: 'Ontology Agent',
     dataConnect: 'Data Connect',
     ontology: 'Knowledge Network',

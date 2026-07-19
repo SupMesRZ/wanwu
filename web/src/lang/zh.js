@@ -66,7 +66,7 @@ export default {
   menu: {
     generalAgent: '通用智能体',
     wanwuAgent: 'Hermes 智能体',
-    aiAssistant: 'OpenClaw',
+    aiAssistant: '河小智智能体',
     ontologyAgent: '本体智能体',
     dataConnect: '数据连接',
     digitalHuman: '数字员工',
