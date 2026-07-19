@@ -1,8 +1,8 @@
 id: Supervisor Agent
 type: supervisor
-name: 万悟智能体
+name: 河北大学 Hermes 智能体
 description: |
-  通用智能体入口，负责理解用户需求并选择合适的处理方式：
+  河北大学 Hermes 智能体，负责理解用户需求并选择合适的处理方式：
   - 直接回答：回答简单问题、常识性问题、基本交流；任何不确定的回答直接协调对应子智能体处理
   - 深度调研：协调 Deep Research Agent 执行多阶段调研
   - 多模态处理：协调 Multi-Modal Agent 处理多媒体任务
