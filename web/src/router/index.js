@@ -84,7 +84,7 @@ const constantRoutes = [
       },
       {
         path: '/aiAssistant',
-        component: resolve => require(['@/views/aiAssistant/index'], resolve),
+        component: resolve => require(['@/views/rag/index.vue'], resolve),
         meta: { perm: [PERMS.WGA_OPENCLAW] },
       },
       {

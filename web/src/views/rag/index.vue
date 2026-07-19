@@ -6,7 +6,9 @@
   >
     <template #main-content>
       <div class="app-content">
+        <div v-if="loadError" class="load-error">{{ loadError }}</div>
         <Chat
+          v-else
           :editForm="editForm"
           :chatType="'chat'"
           :maxPicNum="currentMaxPicNum"
@@ -21,6 +23,13 @@ import CommonLayout from '@/components/exploreContainer.vue';
 import Chat from './components/chat.vue';
 import { getRagPublishedInfo } from '@/api/rag';
 import { selectModelList } from '@/api/modelAccess';
+import { hexiaozhiRagAppId } from '@/utils/config';
+
+const HEXIAOZHI_NOT_CONFIGURED_MESSAGE =
+  '河小智知识问答应用尚未配置，请联系管理员。';
+const RAG_DETAIL_LOAD_FAILED_MESSAGE =
+  '知识问答应用加载失败，请稍后重试或联系管理员。';
+
 export default {
   name: 'ExploreRag',
   components: { CommonLayout, Chat },
@@ -42,6 +51,7 @@ export default {
         recommendQuestion: [],
       },
       modelOptions: [],
+      loadError: '',
     };
   },
   computed: {
@@ -74,16 +84,25 @@ export default {
     },
   },
   created() {
-    if (this.$route.query.id) {
-      this.editForm.appId = this.$route.query.id;
-      this.getDetail();
+    this.editForm.appId = String(
+      this.$route.query.id || hexiaozhiRagAppId || '',
+    );
+    if (!this.editForm.appId) {
+      this.loadError = HEXIAOZHI_NOT_CONFIGURED_MESSAGE;
+      return;
     }
+    this.getDetail();
   },
 
   methods: {
     async getDetail() {
-      const res = await getRagPublishedInfo({ ragId: this.editForm.appId });
-      if (res.code === 0) {
+      try {
+        const res = await getRagPublishedInfo({ ragId: this.editForm.appId });
+        if (res.code !== 0 || !res.data) {
+          this.loadError = RAG_DETAIL_LOAD_FAILED_MESSAGE;
+          return;
+        }
+        this.loadError = '';
         this.editForm.avatar = res.data.avatar;
         this.editForm.name = res.data.name;
         this.editForm.desc = res.data.desc;
@@ -102,6 +121,8 @@ export default {
           }),
         );
         await this.getModelData();
+      } catch (error) {
+        this.loadError = RAG_DETAIL_LOAD_FAILED_MESSAGE;
       }
     },
     async getModelData() {
@@ -151,6 +172,14 @@ export default {
   width: 100%;
   height: 100%;
   position: relative;
+  .load-error {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color_title;
+    font-size: 16px;
+  }
   .app-header-api {
     width: 100%;
     padding: 10px;
