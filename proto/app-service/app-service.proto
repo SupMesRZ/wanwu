@@ -63,6 +63,12 @@ service AppService {
   rpc GetAPIKeyStatisticList(GetAPIKeyStatisticListReq) returns (GetAPIKeyStatisticListResp) {}
   rpc GetAPIKeyStatisticRecord(GetAPIKeyStatisticRecordReq) returns (GetAPIKeyStatisticRecordResp) {}
   rpc RecordAPIKeyStatistic(RecordAPIKeyStatisticReq) returns (google.protobuf.Empty) {}
+
+  // --- public opinion ---
+  rpc ImportPublicOpinion(ImportPublicOpinionReq) returns (OpinionImportTaskInfo) {}
+  rpc GetPublicOpinionImportTask(GetPublicOpinionImportTaskReq) returns (OpinionImportTaskInfo) {}
+  rpc ListPublicOpinionItems(ListPublicOpinionItemsReq) returns (PublicOpinionItemList) {}
+  rpc GetPublicOpinionItem(GetPublicOpinionItemReq) returns (PublicOpinionItemInfo) {}
 }
 
 
@@ -622,4 +628,84 @@ message RecordAPIKeyStatisticReq {
   int64 nonStreamCosts = 9;
   string requestBody = 10;
   string responseBody = 11;
+}
+
+// --- public opinion ---
+
+message ImportPublicOpinionReq {
+  string orgId = 1;
+  string creatorId = 2;
+  string fileName = 3;
+  string fileType = 4;
+  int64 fileSize = 5;
+  string filePath = 6;
+}
+
+message GetPublicOpinionImportTaskReq {
+  string taskId = 1;
+  string orgId = 2;
+}
+
+message ListPublicOpinionItemsReq {
+  string orgId = 1;
+  string keyword = 2;
+  int64 startTime = 3;
+  int64 endTime = 4;
+  string sourceType = 5;
+  string topic = 6;
+  int32 pageNo = 7;
+  int32 pageSize = 8;
+}
+
+message GetPublicOpinionItemReq {
+  string itemId = 1;
+  string orgId = 2;
+}
+
+message OpinionImportTaskInfo {
+  string taskId = 1;
+  int64 createdAt = 2;
+  int64 updatedAt = 3;
+  string orgId = 4;
+  string creatorId = 5;
+  string fileName = 6;
+  string fileType = 7;
+  int64 fileSize = 8;
+  string fileHash = 9;
+  string status = 10;
+  int32 totalRows = 11;
+  int32 successRows = 12;
+  int32 duplicateRows = 13;
+  int32 failedRows = 14;
+  string errorDetail = 15;
+  int64 startedAt = 16;
+  int64 finishedAt = 17;
+}
+
+message PublicOpinionItemInfo {
+  string itemId = 1;
+  int64 createdAt = 2;
+  int64 updatedAt = 3;
+  string orgId = 4;
+  string creatorId = 5;
+  string importTaskId = 6;
+  string title = 7;
+  string content = 8;
+  string summary = 9;
+  string sourceName = 10;
+  string sourceType = 11;
+  string publicUrl = 12;
+  int64 publishedAt = 13;
+  int64 collectedAt = 14;
+  string topic = 15;
+  string remark = 16;
+  string contentHash = 17;
+  string urlHash = 18;
+}
+
+message PublicOpinionItemList {
+  repeated PublicOpinionItemInfo items = 1;
+  int32 total = 2;
+  int32 pageNo = 3;
+  int32 pageSize = 4;
 }

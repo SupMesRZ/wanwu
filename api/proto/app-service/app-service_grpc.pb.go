@@ -61,6 +61,10 @@ const (
 	AppService_GetAPIKeyStatisticList_FullMethodName       = "/app_service.AppService/GetAPIKeyStatisticList"
 	AppService_GetAPIKeyStatisticRecord_FullMethodName     = "/app_service.AppService/GetAPIKeyStatisticRecord"
 	AppService_RecordAPIKeyStatistic_FullMethodName        = "/app_service.AppService/RecordAPIKeyStatistic"
+	AppService_ImportPublicOpinion_FullMethodName          = "/app_service.AppService/ImportPublicOpinion"
+	AppService_GetPublicOpinionImportTask_FullMethodName   = "/app_service.AppService/GetPublicOpinionImportTask"
+	AppService_ListPublicOpinionItems_FullMethodName       = "/app_service.AppService/ListPublicOpinionItems"
+	AppService_GetPublicOpinionItem_FullMethodName         = "/app_service.AppService/GetPublicOpinionItem"
 )
 
 // AppServiceClient is the client API for AppService service.
@@ -117,6 +121,11 @@ type AppServiceClient interface {
 	GetAPIKeyStatisticList(ctx context.Context, in *GetAPIKeyStatisticListReq, opts ...grpc.CallOption) (*GetAPIKeyStatisticListResp, error)
 	GetAPIKeyStatisticRecord(ctx context.Context, in *GetAPIKeyStatisticRecordReq, opts ...grpc.CallOption) (*GetAPIKeyStatisticRecordResp, error)
 	RecordAPIKeyStatistic(ctx context.Context, in *RecordAPIKeyStatisticReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// --- public opinion ---
+	ImportPublicOpinion(ctx context.Context, in *ImportPublicOpinionReq, opts ...grpc.CallOption) (*OpinionImportTaskInfo, error)
+	GetPublicOpinionImportTask(ctx context.Context, in *GetPublicOpinionImportTaskReq, opts ...grpc.CallOption) (*OpinionImportTaskInfo, error)
+	ListPublicOpinionItems(ctx context.Context, in *ListPublicOpinionItemsReq, opts ...grpc.CallOption) (*PublicOpinionItemList, error)
+	GetPublicOpinionItem(ctx context.Context, in *GetPublicOpinionItemReq, opts ...grpc.CallOption) (*PublicOpinionItemInfo, error)
 }
 
 type appServiceClient struct {
@@ -537,6 +546,46 @@ func (c *appServiceClient) RecordAPIKeyStatistic(ctx context.Context, in *Record
 	return out, nil
 }
 
+func (c *appServiceClient) ImportPublicOpinion(ctx context.Context, in *ImportPublicOpinionReq, opts ...grpc.CallOption) (*OpinionImportTaskInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpinionImportTaskInfo)
+	err := c.cc.Invoke(ctx, AppService_ImportPublicOpinion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) GetPublicOpinionImportTask(ctx context.Context, in *GetPublicOpinionImportTaskReq, opts ...grpc.CallOption) (*OpinionImportTaskInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpinionImportTaskInfo)
+	err := c.cc.Invoke(ctx, AppService_GetPublicOpinionImportTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) ListPublicOpinionItems(ctx context.Context, in *ListPublicOpinionItemsReq, opts ...grpc.CallOption) (*PublicOpinionItemList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PublicOpinionItemList)
+	err := c.cc.Invoke(ctx, AppService_ListPublicOpinionItems_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) GetPublicOpinionItem(ctx context.Context, in *GetPublicOpinionItemReq, opts ...grpc.CallOption) (*PublicOpinionItemInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PublicOpinionItemInfo)
+	err := c.cc.Invoke(ctx, AppService_GetPublicOpinionItem_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AppServiceServer is the server API for AppService service.
 // All implementations must embed UnimplementedAppServiceServer
 // for forward compatibility.
@@ -591,6 +640,11 @@ type AppServiceServer interface {
 	GetAPIKeyStatisticList(context.Context, *GetAPIKeyStatisticListReq) (*GetAPIKeyStatisticListResp, error)
 	GetAPIKeyStatisticRecord(context.Context, *GetAPIKeyStatisticRecordReq) (*GetAPIKeyStatisticRecordResp, error)
 	RecordAPIKeyStatistic(context.Context, *RecordAPIKeyStatisticReq) (*emptypb.Empty, error)
+	// --- public opinion ---
+	ImportPublicOpinion(context.Context, *ImportPublicOpinionReq) (*OpinionImportTaskInfo, error)
+	GetPublicOpinionImportTask(context.Context, *GetPublicOpinionImportTaskReq) (*OpinionImportTaskInfo, error)
+	ListPublicOpinionItems(context.Context, *ListPublicOpinionItemsReq) (*PublicOpinionItemList, error)
+	GetPublicOpinionItem(context.Context, *GetPublicOpinionItemReq) (*PublicOpinionItemInfo, error)
 	mustEmbedUnimplementedAppServiceServer()
 }
 
@@ -723,6 +777,18 @@ func (UnimplementedAppServiceServer) GetAPIKeyStatisticRecord(context.Context, *
 }
 func (UnimplementedAppServiceServer) RecordAPIKeyStatistic(context.Context, *RecordAPIKeyStatisticReq) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RecordAPIKeyStatistic not implemented")
+}
+func (UnimplementedAppServiceServer) ImportPublicOpinion(context.Context, *ImportPublicOpinionReq) (*OpinionImportTaskInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ImportPublicOpinion not implemented")
+}
+func (UnimplementedAppServiceServer) GetPublicOpinionImportTask(context.Context, *GetPublicOpinionImportTaskReq) (*OpinionImportTaskInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPublicOpinionImportTask not implemented")
+}
+func (UnimplementedAppServiceServer) ListPublicOpinionItems(context.Context, *ListPublicOpinionItemsReq) (*PublicOpinionItemList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPublicOpinionItems not implemented")
+}
+func (UnimplementedAppServiceServer) GetPublicOpinionItem(context.Context, *GetPublicOpinionItemReq) (*PublicOpinionItemInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPublicOpinionItem not implemented")
 }
 func (UnimplementedAppServiceServer) mustEmbedUnimplementedAppServiceServer() {}
 func (UnimplementedAppServiceServer) testEmbeddedByValue()                    {}
@@ -1483,6 +1549,78 @@ func _AppService_RecordAPIKeyStatistic_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AppService_ImportPublicOpinion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ImportPublicOpinionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).ImportPublicOpinion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_ImportPublicOpinion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).ImportPublicOpinion(ctx, req.(*ImportPublicOpinionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_GetPublicOpinionImportTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPublicOpinionImportTaskReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).GetPublicOpinionImportTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_GetPublicOpinionImportTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).GetPublicOpinionImportTask(ctx, req.(*GetPublicOpinionImportTaskReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_ListPublicOpinionItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPublicOpinionItemsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).ListPublicOpinionItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_ListPublicOpinionItems_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).ListPublicOpinionItems(ctx, req.(*ListPublicOpinionItemsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_GetPublicOpinionItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPublicOpinionItemReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).GetPublicOpinionItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_GetPublicOpinionItem_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).GetPublicOpinionItem(ctx, req.(*GetPublicOpinionItemReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AppService_ServiceDesc is the grpc.ServiceDesc for AppService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1653,6 +1791,22 @@ var AppService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RecordAPIKeyStatistic",
 			Handler:    _AppService_RecordAPIKeyStatistic_Handler,
+		},
+		{
+			MethodName: "ImportPublicOpinion",
+			Handler:    _AppService_ImportPublicOpinion_Handler,
+		},
+		{
+			MethodName: "GetPublicOpinionImportTask",
+			Handler:    _AppService_GetPublicOpinionImportTask_Handler,
+		},
+		{
+			MethodName: "ListPublicOpinionItems",
+			Handler:    _AppService_ListPublicOpinionItems_Handler,
+		},
+		{
+			MethodName: "GetPublicOpinionItem",
+			Handler:    _AppService_GetPublicOpinionItem_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

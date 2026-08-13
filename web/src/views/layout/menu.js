@@ -1,6 +1,6 @@
 import { PERMS } from '@/router/permission';
 import { i18n } from '@/lang';
-import { basePath } from '@/utils/config';
+import { basePath, vegaOrigin } from '@/utils/config';
 
 /**
  *  index: 为唯一标识，children 下定义的 index 标准为： 父级 index-子级定义的唯一标识
@@ -53,7 +53,7 @@ export const menuList = [
         icon: 'menu_team',
         perm: PERMS.ONTOLOGY_DATA_SOURCE,
         redirect: () => {
-          location.href = location.origin + basePath + '/vega/digital-human';
+          location.href = vegaOrigin + basePath + '/vega/digital-human';
         },
       },
       {
@@ -62,7 +62,7 @@ export const menuList = [
         icon: 'menu_net',
         perm: PERMS.ONTOLOGY_KNOWLEDGE_NETWORK,
         redirect: () => {
-          location.href = location.origin + basePath + '/vega/ontology';
+          location.href = vegaOrigin + basePath + '/vega/ontology';
         },
       },
       {
@@ -71,7 +71,7 @@ export const menuList = [
         icon: 'menu_link',
         perm: PERMS.ONTOLOGY_DATA_SOURCE,
         redirect: () => {
-          location.href = location.origin + basePath + '/vega/data-connect';
+          location.href = vegaOrigin + basePath + '/vega/data-connect';
         },
       },
     ],

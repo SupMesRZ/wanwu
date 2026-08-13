@@ -1,5 +1,7 @@
 export const basePath =
   window.APP_BASE_PATH || process.env.VUE_APP_BASE_PATH || '';
+export const vegaOrigin =
+  process.env.VUE_APP_VEGA_ORIGIN || window.location.origin;
 export const hexiaozhiRagAppId =
   typeof window.HEXIAOZHI_RAG_APP_ID === 'string'
     ? window.HEXIAOZHI_RAG_APP_ID

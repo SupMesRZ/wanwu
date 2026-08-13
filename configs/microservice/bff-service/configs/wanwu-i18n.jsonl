@@ -619,6 +619,18 @@
 {"code":0,"key":"app_statistic_api_call_count_total","langs":{"zh":"APIKey调用总次数"}}
 {"code":0,"key":"app_statistic_api_call_success","langs":{"zh":"APIKey调用成功次数"}}
 {"code":0,"key":"app_statistic_api_call_failure","langs":{"zh":"APIKey调用失败次数"}}
+{"code":300016,"key":"app_public_opinion_invalid_argument","langs":{"zh":"校园舆情请求参数错误：%v"}}
+{"code":300016,"key":"app_public_opinion_invalid_id","langs":{"zh":"校园舆情ID字段%v的值%v不合法"}}
+{"code":300016,"key":"app_public_opinion_task_create","langs":{"zh":"创建校园舆情导入任务失败：%v"}}
+{"code":300016,"key":"app_public_opinion_task_update","langs":{"zh":"更新校园舆情导入任务(%v)失败：%v"}}
+{"code":300016,"key":"app_public_opinion_task_get","langs":{"zh":"查询校园舆情导入任务(%v)失败：%v"}}
+{"code":300016,"key":"app_public_opinion_task_not_found","langs":{"zh":"校园舆情导入任务(%v)不存在"}}
+{"code":300016,"key":"app_public_opinion_import_file","langs":{"zh":"处理校园舆情导入文件失败：%v"}}
+{"code":300016,"key":"app_public_opinion_import_database","langs":{"zh":"写入校园舆情数据失败：%v"}}
+{"code":300016,"key":"app_public_opinion_item_create","langs":{"zh":"创建校园舆情数据失败：%v"}}
+{"code":300016,"key":"app_public_opinion_item_list","langs":{"zh":"查询校园舆情数据列表失败：%v"}}
+{"code":300016,"key":"app_public_opinion_item_get","langs":{"zh":"查询校园舆情数据(%v)失败：%v"}}
+{"code":300016,"key":"app_public_opinion_item_not_found","langs":{"zh":"校园舆情数据(%v)不存在"}}
 {"code":320001,"key":"ope_system_custom_query","langs":{"zh":"查询自定义配置(%v)错误: %v"}}
 {"code":320001,"key":"ope_system_custom_create","langs":{"zh":"创建自定义配置(%v)错误: %v"}}
 {"code":320001,"key":"ope_system_custom_update","langs":{"zh":"更新自定义配置(%v)错误: %v"}}

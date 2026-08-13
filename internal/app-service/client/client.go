@@ -83,4 +83,13 @@ type IClient interface {
 	GetAPIKeyStatisticRecord(ctx context.Context, orgIds, userIds []string, startDate, endDate string, apiKeyIds, methodPaths []string, offset, limit int32) (*orm.APIKeyStatisticRecordList, *err_code.Status)
 	RecordAPIKeyStatistic(ctx context.Context, userId, orgId, apiKeyId, methodPath string,
 		callTime int64, httpStatus string, isStream bool, streamCosts, nonStreamCosts int64, requestBody, responseBody string) *err_code.Status
+
+	// --- public opinion ---
+	CreateOpinionImportTask(ctx context.Context, task *model.OpinionImportTask) *err_code.Status
+	UpdateOpinionImportTask(ctx context.Context, task *model.OpinionImportTask) *err_code.Status
+	GetOpinionImportTask(ctx context.Context, taskID uint32, orgID string) (*model.OpinionImportTask, *err_code.Status)
+	ImportPublicOpinion(ctx context.Context, input orm.PublicOpinionImportInput) (*model.OpinionImportTask, *err_code.Status)
+	CreateOpinionItem(ctx context.Context, item *model.OpinionItem) *err_code.Status
+	ListOpinionItems(ctx context.Context, filter orm.PublicOpinionListFilter) ([]*model.OpinionItem, int64, *err_code.Status)
+	GetOpinionItem(ctx context.Context, itemID uint32, orgID string) (*model.OpinionItem, *err_code.Status)
 }

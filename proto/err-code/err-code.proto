@@ -225,7 +225,8 @@ enum Code {
   AppConversation = 300012; // 对话流相关错误
   ApiKey = 300013; //ApiKey相关错误
   AppModelRecord = 300014; //模型统计相关错误
-   AppAPIKeyRecord = 300015; //API Key统计相关错误
+  AppAPIKeyRecord = 300015; // API Key统计相关错误
+  AppPublicOpinion = 300016; // 校园舆情相关错误
 
 
   // --- mcp-service ---
@@ -285,4 +286,3 @@ enum Code {
   WanwuApiKeyDisabled = 420041; // 选中的 API Key 已被禁用
   WanwuApiKeyExpired = 420042; // 选中的 API Key 已过期
 }
-
