@@ -326,6 +326,13 @@ const constantRoutes = [
         meta: { perm: [PERMS.OBSERVATION_STATISTIC] },
       },
       {
+        path: '/publicOpinion',
+        component: resolve =>
+          require(['@/views/publicOpinion/index.vue'], resolve),
+        // 第一阶段临时复用统计看板权限；正式接入后端后替换为独立舆情权限。
+        meta: { perm: [PERMS.OBSERVATION_STATISTIC] },
+      },
+      {
         path: '/openApiKey',
         component: resolve => require(['@/views/apiKeyManagement'], resolve),
         meta: { perm: [PERMS.API_KEY_MANAGE] },
