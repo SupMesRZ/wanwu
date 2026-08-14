@@ -13,6 +13,11 @@ export const PERMS = {
   ONTOLOGY_KNOWLEDGE_NETWORK: 'ontology.knowledge_network', // 本体智能体-知识网络
   ONTOLOGY_DATA_SOURCE: 'ontology.data_source', // 本体智能体-数据连接
 
+  PUBLIC_OPINION: 'public_opinion', // 舆情研判
+  PUBLIC_OPINION_VIEW: 'public_opinion.view', // 舆情研判-查看
+  PUBLIC_OPINION_MANAGE: 'public_opinion.manage', // 舆情研判-导入管理
+  PUBLIC_OPINION_ANALYSIS: 'public_opinion.analysis', // 舆情研判-分析
+
   MODEL_SERVICE: 'model', // 模型服务
   MODEL_MANAGE: 'model.model_management', // 模型服务-模型管理
 

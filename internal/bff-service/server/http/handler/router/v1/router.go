@@ -20,6 +20,9 @@ func Register(apiV1 *gin.RouterGroup) {
 	// ontology
 	registerOntology(apiV1)
 
+	// public opinion
+	registerPublicOpinion(apiV1)
+
 	// model
 	registerModel(apiV1)
 

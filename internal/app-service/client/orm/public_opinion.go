@@ -7,14 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"strings"
 	"time"
 
 	errs "github.com/UnicomAI/wanwu/api/proto/err-code"
 	"github.com/UnicomAI/wanwu/internal/app-service/client/model"
 	app_pkg "github.com/UnicomAI/wanwu/internal/app-service/pkg"
+	"github.com/UnicomAI/wanwu/pkg/minio"
 	"github.com/UnicomAI/wanwu/pkg/util"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -28,7 +27,8 @@ type PublicOpinionImportInput struct {
 	FileName  string
 	FileType  string
 	FileSize  int64
-	FilePath  string
+	// FileRef is an internal MinIO reference. It is never interpreted as a local path or fetched over HTTP.
+	FileRef string
 }
 
 type PublicOpinionListFilter struct {
@@ -96,12 +96,13 @@ func (c *Client) ImportPublicOpinion(ctx context.Context, input PublicOpinionImp
 		return nil, status
 	}
 
-	fileHash, err := publicOpinionFileHash(input.FilePath)
+	fileData, err := minio.DownloadFileToMemory(ctx, input.FileRef)
 	if err != nil {
-		return c.failPublicOpinionTask(ctx, task, 0, "file", err.Error())
+		return c.failPublicOpinionTask(ctx, task, 0, "file", fmt.Sprintf("从内部对象存储读取导入文件失败: %v", err))
 	}
+	fileHash := publicOpinionFileHash(fileData)
 	task.FileHash = fileHash
-	rows, rowErrors, err := app_pkg.ParsePublicOpinionFile(input.FilePath, input.FileName, input.FileType)
+	rows, rowErrors, err := app_pkg.ParsePublicOpinionData(fileData, input.FileName, input.FileType)
 	if err != nil {
 		return c.failPublicOpinionTask(ctx, task, 0, "file", err.Error())
 	}
@@ -260,17 +261,9 @@ func publicOpinionFinalStatus(success, duplicate, failed int32) string {
 	return model.OpinionImportTaskStatusFailed
 }
 
-func publicOpinionFileHash(filePath string) (string, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return "", fmt.Errorf("读取导入文件失败: %w", err)
-	}
-	defer func() { _ = f.Close() }()
-	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", fmt.Errorf("计算文件哈希失败: %w", err)
-	}
-	return hex.EncodeToString(h.Sum(nil)), nil
+func publicOpinionFileHash(data []byte) string {
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
 }
 
 func publicOpinionContentHash(title, content string) string {

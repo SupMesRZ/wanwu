@@ -24,7 +24,7 @@ func (s *Service) ImportPublicOpinion(ctx context.Context, req *app_service.Impo
 		FileName:  req.FileName,
 		FileType:  req.FileType,
 		FileSize:  req.FileSize,
-		FilePath:  req.FilePath,
+		FileRef:   req.FilePath,
 	})
 	if status != nil {
 		return nil, errStatus(errs.Code_AppPublicOpinion, status)

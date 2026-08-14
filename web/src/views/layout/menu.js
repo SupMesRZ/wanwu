@@ -30,15 +30,14 @@ export const menuList = [
   {
     name: i18n.t('menu.campusGovernance'),
     index: 'campusGovernance',
-    // 第一阶段临时复用统计看板权限；正式接入后端后替换为独立舆情权限。
-    perm: [PERMS.APP_OBSERVATION],
+    perm: [PERMS.PUBLIC_OPINION],
     children: [
       {
         name: i18n.t('menu.publicOpinion'),
         index: 'publicOpinion',
         icon: 'menu_statistics',
         path: '/publicOpinion',
-        perm: PERMS.OBSERVATION_STATISTIC,
+        perm: PERMS.PUBLIC_OPINION,
       },
     ],
   },

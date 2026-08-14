@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"net/url"
@@ -52,8 +53,17 @@ type PublicOpinionRowError struct {
 	Reason string `json:"reason"`
 }
 
-// ParsePublicOpinionFile reads an internal trusted local file path. It never downloads remote content.
+// ParsePublicOpinionFile parses a trusted local file and is retained for internal callers and tests.
 func ParsePublicOpinionFile(filePath, fileName, fileType string) ([]PublicOpinionRow, []PublicOpinionRowError, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("读取导入文件失败: %w", err)
+	}
+	return ParsePublicOpinionData(data, fileName, fileType)
+}
+
+// ParsePublicOpinionData parses file content already fetched through a trusted internal storage client.
+func ParsePublicOpinionData(data []byte, fileName, fileType string) ([]PublicOpinionRow, []PublicOpinionRowError, error) {
 	typ, err := resolvePublicOpinionFileType(fileName, fileType)
 	if err != nil {
 		return nil, nil, err
@@ -63,9 +73,9 @@ func ParsePublicOpinionFile(filePath, fileName, fileType string) ([]PublicOpinio
 	var date1904 bool
 	switch typ {
 	case ".csv":
-		rows, err = readPublicOpinionCSV(filePath)
+		rows, err = readPublicOpinionCSV(data)
 	case ".xlsx":
-		rows, date1904, err = readPublicOpinionXLSX(filePath)
+		rows, date1904, err = readPublicOpinionXLSX(data)
 	}
 	if err != nil {
 		return nil, nil, err
@@ -139,13 +149,8 @@ func resolvePublicOpinionFileType(fileName, fileType string) (string, error) {
 	return typ, nil
 }
 
-func readPublicOpinionCSV(filePath string) ([][]string, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("读取 CSV 文件失败: %w", err)
-	}
-	defer func() { _ = f.Close() }()
-	r := csv.NewReader(f)
+func readPublicOpinionCSV(data []byte) ([][]string, error) {
+	r := csv.NewReader(bytes.NewReader(data))
 	r.FieldsPerRecord = -1
 	rows, err := r.ReadAll()
 	if err != nil {
@@ -154,8 +159,8 @@ func readPublicOpinionCSV(filePath string) ([][]string, error) {
 	return rows, nil
 }
 
-func readPublicOpinionXLSX(filePath string) ([][]string, bool, error) {
-	f, err := excelize.OpenFile(filePath)
+func readPublicOpinionXLSX(data []byte) ([][]string, bool, error) {
+	f, err := excelize.OpenReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, false, fmt.Errorf("读取 XLSX 文件失败: %w", err)
 	}

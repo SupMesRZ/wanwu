@@ -47,6 +47,18 @@ func Init(r *gin.Engine) {
 	// ontology.data_source
 	mid.Sub("ontology").NewSub("data_source", "数据连接", route.PermNeedCheck, true, true)
 
+	// --- public_opinion ---
+	mid.NewSub("public_opinion", "舆情研判", route.PermNeedCheck, true, true, JWTUser, CheckUserPerm)
+
+	// public_opinion.view
+	mid.Sub("public_opinion").NewSub("view", "查看舆情", route.PermNeedCheck, true, true)
+
+	// public_opinion.manage
+	mid.Sub("public_opinion").NewSub("manage", "舆情导入管理", route.PermNeedCheck, true, true)
+
+	// public_opinion.analysis
+	mid.Sub("public_opinion").NewSub("analysis", "舆情研判分析", route.PermNeedCheck, true, true)
+
 	// --- model ---
 	mid.NewSub("model", "模型服务", route.PermNeedCheck, true, true, JWTUser, CheckUserPerm)
 
