@@ -329,7 +329,10 @@ const constantRoutes = [
         path: '/publicOpinion',
         component: resolve =>
           require(['@/views/publicOpinion/index.vue'], resolve),
-        meta: { perm: [PERMS.PUBLIC_OPINION] },
+        // 兼容尚未注册独立舆情权限的旧版 BFF，避免滚动升级期间路由被过滤。
+        meta: {
+          perm: [PERMS.PUBLIC_OPINION, PERMS.OBSERVATION_STATISTIC],
+        },
       },
       {
         path: '/openApiKey',

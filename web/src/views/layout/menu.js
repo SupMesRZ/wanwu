@@ -30,14 +30,15 @@ export const menuList = [
   {
     name: i18n.t('menu.campusGovernance'),
     index: 'campusGovernance',
-    perm: [PERMS.PUBLIC_OPINION],
+    // 兼容尚未注册独立舆情权限的旧版 BFF，避免滚动升级期间入口消失。
+    perm: [PERMS.PUBLIC_OPINION, PERMS.APP_OBSERVATION],
     children: [
       {
         name: i18n.t('menu.publicOpinion'),
         index: 'publicOpinion',
         icon: 'menu_statistics',
         path: '/publicOpinion',
-        perm: PERMS.PUBLIC_OPINION,
+        perm: [PERMS.PUBLIC_OPINION, PERMS.OBSERVATION_STATISTIC],
       },
     ],
   },
