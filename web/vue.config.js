@@ -79,6 +79,9 @@ module.exports = {
     open: false,
     hot: true,
     compress: false,
+    historyApiFallback: {
+      rewrites: [{ from: /^\/aibase(?:\/.*)?$/, to: '/aibase/index.html' }],
+    },
     watchFiles: {
       paths: ['src/**/*'],
       options: {
