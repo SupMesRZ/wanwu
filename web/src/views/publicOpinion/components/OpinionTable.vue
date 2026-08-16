@@ -273,10 +273,16 @@ export default {
   },
   computed: {
     canView() {
-      return this.simple || checkPerm(PERMS.PUBLIC_OPINION_VIEW);
+      return (
+        this.simple ||
+        checkPerm([PERMS.PUBLIC_OPINION_VIEW, PERMS.OBSERVATION_STATISTIC])
+      );
     },
     canManage() {
-      return checkPerm(PERMS.PUBLIC_OPINION_MANAGE);
+      return checkPerm([
+        PERMS.PUBLIC_OPINION_MANAGE,
+        PERMS.OBSERVATION_STATISTIC,
+      ]);
     },
     displayRows() {
       return this.simple ? opinionList.slice(0, 6) : this.rows;
