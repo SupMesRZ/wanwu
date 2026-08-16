@@ -186,7 +186,7 @@ func (c *Client) CreateOpinionItem(ctx context.Context, item *model.OpinionItem)
 	return nil
 }
 
-func (c *Client) ListOpinionItems(ctx context.Context, filter PublicOpinionListFilter) ([]*model.OpinionItem, int64, *errs.Status) {
+func (c *Client) ListOpinionItems(ctx context.Context, filter PublicOpinionListFilter) ([]*OpinionItemWithEvent, int64, *errs.Status) {
 	pageNo, pageSize := normalizePublicOpinionPage(filter.PageNo, filter.PageSize)
 	query := c.db.WithContext(ctx).Model(&model.OpinionItem{}).Where("org_id = ?", filter.OrgID)
 	if keyword := strings.TrimSpace(filter.Keyword); keyword != "" {
@@ -213,10 +213,14 @@ func (c *Client) ListOpinionItems(ctx context.Context, filter PublicOpinionListF
 	if err := query.Order("published_at DESC, id DESC").Offset(int((pageNo - 1) * pageSize)).Limit(int(pageSize)).Find(&items).Error; err != nil {
 		return nil, 0, toErrStatus("app_public_opinion_item_list", err.Error())
 	}
-	return items, total, nil
+	result, status := c.enrichOpinionItemsWithEvents(ctx, filter.OrgID, items)
+	if status != nil {
+		return nil, 0, status
+	}
+	return result, total, nil
 }
 
-func (c *Client) GetOpinionItem(ctx context.Context, itemID uint32, orgID string) (*model.OpinionItem, *errs.Status) {
+func (c *Client) GetOpinionItem(ctx context.Context, itemID uint32, orgID string) (*OpinionItemWithEvent, *errs.Status) {
 	var item model.OpinionItem
 	err := c.db.WithContext(ctx).Where("id = ? AND org_id = ?", itemID, orgID).First(&item).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -225,7 +229,48 @@ func (c *Client) GetOpinionItem(ctx context.Context, itemID uint32, orgID string
 	if err != nil {
 		return nil, toErrStatus("app_public_opinion_item_get", util.Int2Str(itemID), err.Error())
 	}
-	return &item, nil
+	items, status := c.enrichOpinionItemsWithEvents(ctx, orgID, []*model.OpinionItem{&item})
+	if status != nil {
+		return nil, status
+	}
+	return items[0], nil
+}
+
+func (c *Client) enrichOpinionItemsWithEvents(ctx context.Context, orgID string, items []*model.OpinionItem) ([]*OpinionItemWithEvent, *errs.Status) {
+	result := make([]*OpinionItemWithEvent, 0, len(items))
+	if len(items) == 0 {
+		return result, nil
+	}
+	itemIDs := make([]uint32, 0, len(items))
+	for _, item := range items {
+		itemIDs = append(itemIDs, item.ID)
+	}
+	type eventBinding struct {
+		ItemID      uint32 `gorm:"column:item_id"`
+		EventID     uint32 `gorm:"column:event_id"`
+		EventTitle  string `gorm:"column:event_title"`
+		EventStatus string `gorm:"column:event_status"`
+	}
+	var bindings []eventBinding
+	err := c.db.WithContext(ctx).Table("opinion_event_items AS event_item").
+		Select("event_item.item_id, event.id AS event_id, event.title AS event_title, event.status AS event_status").
+		Joins("JOIN opinion_events AS event ON event.id = event_item.event_id AND event.org_id = event_item.org_id").
+		Where("event_item.org_id = ? AND event_item.item_id IN ?", orgID, itemIDs).
+		Find(&bindings).Error
+	if err != nil {
+		return nil, toErrStatus("app_public_opinion_item_list", err.Error())
+	}
+	bindingByItemID := make(map[uint32]eventBinding, len(bindings))
+	for _, binding := range bindings {
+		bindingByItemID[binding.ItemID] = binding
+	}
+	for _, item := range items {
+		binding := bindingByItemID[item.ID]
+		result = append(result, &OpinionItemWithEvent{
+			Item: item, EventID: binding.EventID, EventTitle: binding.EventTitle, EventStatus: binding.EventStatus,
+		})
+	}
+	return result, nil
 }
 
 func (c *Client) failPublicOpinionTask(ctx context.Context, task *model.OpinionImportTask, row int, field, reason string) (*model.OpinionImportTask, *errs.Status) {

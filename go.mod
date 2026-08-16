@@ -127,7 +127,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
 	github.com/glebarez/go-sqlite v1.20.3 // indirect
-	github.com/glebarez/sqlite v1.7.0 // indirect
+	github.com/glebarez/sqlite v1.7.0
 	github.com/go-ego/cedar v0.10.0 // indirect
 	github.com/go-ego/gpy v0.31.0 // indirect
 	github.com/go-ego/gse v0.50.3 // indirect

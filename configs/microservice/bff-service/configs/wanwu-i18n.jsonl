@@ -631,6 +631,20 @@
 {"code":300016,"key":"app_public_opinion_item_list","langs":{"zh":"查询校园舆情数据列表失败：%v"}}
 {"code":300016,"key":"app_public_opinion_item_get","langs":{"zh":"查询校园舆情数据(%v)失败：%v"}}
 {"code":300016,"key":"app_public_opinion_item_not_found","langs":{"zh":"校园舆情数据(%v)不存在"}}
+{"code":300016,"key":"app_public_opinion_event_create","langs":{"zh":"创建校园舆情事件失败：%v"}}
+{"code":300016,"key":"app_public_opinion_event_update","langs":{"zh":"更新校园舆情事件失败：%v"}}
+{"code":300016,"key":"app_public_opinion_event_list","langs":{"zh":"查询校园舆情事件列表失败：%v"}}
+{"code":300016,"key":"app_public_opinion_event_get","langs":{"zh":"查询校园舆情事件(%v)失败：%v"}}
+{"code":300016,"key":"app_public_opinion_event_not_found","langs":{"zh":"校园舆情事件(%v)不存在"}}
+{"code":300016,"key":"app_public_opinion_event_archived","langs":{"zh":"校园舆情事件(%v)已归档，不能继续修改"}}
+{"code":300016,"key":"app_public_opinion_event_items_get","langs":{"zh":"查询校园舆情事件关联数据失败：%v"}}
+{"code":300016,"key":"app_public_opinion_event_item_not_available","langs":{"zh":"部分校园舆情数据不存在或不属于当前组织"}}
+{"code":300016,"key":"app_public_opinion_event_item_assigned","langs":{"zh":"部分校园舆情数据已归并到其他事件"}}
+{"code":300016,"key":"app_public_opinion_event_items_add","langs":{"zh":"增加校园舆情事件关联失败：%v"}}
+{"code":300016,"key":"app_public_opinion_event_items_remove","langs":{"zh":"解除校园舆情事件关联失败：%v"}}
+{"code":300016,"key":"app_public_opinion_event_item_not_related","langs":{"zh":"部分校园舆情数据不属于当前事件"}}
+{"code":300016,"key":"app_public_opinion_event_status_update","langs":{"zh":"更新校园舆情事件状态失败：%v"}}
+{"code":300016,"key":"app_public_opinion_event_invalid_status_transition","langs":{"zh":"校园舆情事件不允许从状态%v转换到%v"}}
 {"code":320001,"key":"ope_system_custom_query","langs":{"zh":"查询自定义配置(%v)错误: %v"}}
 {"code":320001,"key":"ope_system_custom_create","langs":{"zh":"创建自定义配置(%v)错误: %v"}}
 {"code":320001,"key":"ope_system_custom_update","langs":{"zh":"更新自定义配置(%v)错误: %v"}}

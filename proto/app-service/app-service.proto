@@ -69,6 +69,13 @@ service AppService {
   rpc GetPublicOpinionImportTask(GetPublicOpinionImportTaskReq) returns (OpinionImportTaskInfo) {}
   rpc ListPublicOpinionItems(ListPublicOpinionItemsReq) returns (PublicOpinionItemList) {}
   rpc GetPublicOpinionItem(GetPublicOpinionItemReq) returns (PublicOpinionItemInfo) {}
+  rpc CreateOpinionEvent(CreateOpinionEventReq) returns (OpinionEventInfo) {}
+  rpc UpdateOpinionEvent(UpdateOpinionEventReq) returns (OpinionEventInfo) {}
+  rpc ListOpinionEvents(ListOpinionEventsReq) returns (OpinionEventList) {}
+  rpc GetOpinionEvent(GetOpinionEventReq) returns (OpinionEventDetail) {}
+  rpc AddOpinionEventItems(ChangeOpinionEventItemsReq) returns (OpinionEventDetail) {}
+  rpc RemoveOpinionEventItems(ChangeOpinionEventItemsReq) returns (OpinionEventDetail) {}
+  rpc UpdateOpinionEventStatus(UpdateOpinionEventStatusReq) returns (OpinionEventInfo) {}
 }
 
 
@@ -701,6 +708,9 @@ message PublicOpinionItemInfo {
   string remark = 16;
   string contentHash = 17;
   string urlHash = 18;
+  string eventId = 19;
+  string eventTitle = 20;
+  string eventStatus = 21;
 }
 
 message PublicOpinionItemList {
@@ -708,4 +718,73 @@ message PublicOpinionItemList {
   int32 total = 2;
   int32 pageNo = 3;
   int32 pageSize = 4;
+}
+
+message CreateOpinionEventReq {
+  string orgId = 1;
+  string creatorId = 2;
+  string title = 3;
+  string topic = 4;
+  string summary = 5;
+  repeated string itemIds = 6;
+}
+
+message UpdateOpinionEventReq {
+  string eventId = 1;
+  string orgId = 2;
+  string title = 3;
+  string topic = 4;
+  string summary = 5;
+}
+
+message ListOpinionEventsReq {
+  string orgId = 1;
+  string keyword = 2;
+  string topic = 3;
+  string status = 4;
+  int32 pageNo = 5;
+  int32 pageSize = 6;
+}
+
+message GetOpinionEventReq {
+  string eventId = 1;
+  string orgId = 2;
+}
+
+message ChangeOpinionEventItemsReq {
+  string eventId = 1;
+  string orgId = 2;
+  string creatorId = 3;
+  repeated string itemIds = 4;
+}
+
+message UpdateOpinionEventStatusReq {
+  string eventId = 1;
+  string orgId = 2;
+  string status = 3;
+}
+
+message OpinionEventInfo {
+  string eventId = 1;
+  int64 createdAt = 2;
+  int64 updatedAt = 3;
+  string orgId = 4;
+  string creatorId = 5;
+  string title = 6;
+  string topic = 7;
+  string summary = 8;
+  string status = 9;
+  int32 itemCount = 10;
+}
+
+message OpinionEventList {
+  repeated OpinionEventInfo items = 1;
+  int32 total = 2;
+  int32 pageNo = 3;
+  int32 pageSize = 4;
+}
+
+message OpinionEventDetail {
+  OpinionEventInfo event = 1;
+  repeated PublicOpinionItemInfo items = 2;
 }

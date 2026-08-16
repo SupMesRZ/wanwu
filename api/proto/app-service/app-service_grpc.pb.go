@@ -65,6 +65,13 @@ const (
 	AppService_GetPublicOpinionImportTask_FullMethodName   = "/app_service.AppService/GetPublicOpinionImportTask"
 	AppService_ListPublicOpinionItems_FullMethodName       = "/app_service.AppService/ListPublicOpinionItems"
 	AppService_GetPublicOpinionItem_FullMethodName         = "/app_service.AppService/GetPublicOpinionItem"
+	AppService_CreateOpinionEvent_FullMethodName           = "/app_service.AppService/CreateOpinionEvent"
+	AppService_UpdateOpinionEvent_FullMethodName           = "/app_service.AppService/UpdateOpinionEvent"
+	AppService_ListOpinionEvents_FullMethodName            = "/app_service.AppService/ListOpinionEvents"
+	AppService_GetOpinionEvent_FullMethodName              = "/app_service.AppService/GetOpinionEvent"
+	AppService_AddOpinionEventItems_FullMethodName         = "/app_service.AppService/AddOpinionEventItems"
+	AppService_RemoveOpinionEventItems_FullMethodName      = "/app_service.AppService/RemoveOpinionEventItems"
+	AppService_UpdateOpinionEventStatus_FullMethodName     = "/app_service.AppService/UpdateOpinionEventStatus"
 )
 
 // AppServiceClient is the client API for AppService service.
@@ -126,6 +133,13 @@ type AppServiceClient interface {
 	GetPublicOpinionImportTask(ctx context.Context, in *GetPublicOpinionImportTaskReq, opts ...grpc.CallOption) (*OpinionImportTaskInfo, error)
 	ListPublicOpinionItems(ctx context.Context, in *ListPublicOpinionItemsReq, opts ...grpc.CallOption) (*PublicOpinionItemList, error)
 	GetPublicOpinionItem(ctx context.Context, in *GetPublicOpinionItemReq, opts ...grpc.CallOption) (*PublicOpinionItemInfo, error)
+	CreateOpinionEvent(ctx context.Context, in *CreateOpinionEventReq, opts ...grpc.CallOption) (*OpinionEventInfo, error)
+	UpdateOpinionEvent(ctx context.Context, in *UpdateOpinionEventReq, opts ...grpc.CallOption) (*OpinionEventInfo, error)
+	ListOpinionEvents(ctx context.Context, in *ListOpinionEventsReq, opts ...grpc.CallOption) (*OpinionEventList, error)
+	GetOpinionEvent(ctx context.Context, in *GetOpinionEventReq, opts ...grpc.CallOption) (*OpinionEventDetail, error)
+	AddOpinionEventItems(ctx context.Context, in *ChangeOpinionEventItemsReq, opts ...grpc.CallOption) (*OpinionEventDetail, error)
+	RemoveOpinionEventItems(ctx context.Context, in *ChangeOpinionEventItemsReq, opts ...grpc.CallOption) (*OpinionEventDetail, error)
+	UpdateOpinionEventStatus(ctx context.Context, in *UpdateOpinionEventStatusReq, opts ...grpc.CallOption) (*OpinionEventInfo, error)
 }
 
 type appServiceClient struct {
@@ -586,6 +600,76 @@ func (c *appServiceClient) GetPublicOpinionItem(ctx context.Context, in *GetPubl
 	return out, nil
 }
 
+func (c *appServiceClient) CreateOpinionEvent(ctx context.Context, in *CreateOpinionEventReq, opts ...grpc.CallOption) (*OpinionEventInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpinionEventInfo)
+	err := c.cc.Invoke(ctx, AppService_CreateOpinionEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) UpdateOpinionEvent(ctx context.Context, in *UpdateOpinionEventReq, opts ...grpc.CallOption) (*OpinionEventInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpinionEventInfo)
+	err := c.cc.Invoke(ctx, AppService_UpdateOpinionEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) ListOpinionEvents(ctx context.Context, in *ListOpinionEventsReq, opts ...grpc.CallOption) (*OpinionEventList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpinionEventList)
+	err := c.cc.Invoke(ctx, AppService_ListOpinionEvents_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) GetOpinionEvent(ctx context.Context, in *GetOpinionEventReq, opts ...grpc.CallOption) (*OpinionEventDetail, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpinionEventDetail)
+	err := c.cc.Invoke(ctx, AppService_GetOpinionEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) AddOpinionEventItems(ctx context.Context, in *ChangeOpinionEventItemsReq, opts ...grpc.CallOption) (*OpinionEventDetail, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpinionEventDetail)
+	err := c.cc.Invoke(ctx, AppService_AddOpinionEventItems_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) RemoveOpinionEventItems(ctx context.Context, in *ChangeOpinionEventItemsReq, opts ...grpc.CallOption) (*OpinionEventDetail, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpinionEventDetail)
+	err := c.cc.Invoke(ctx, AppService_RemoveOpinionEventItems_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appServiceClient) UpdateOpinionEventStatus(ctx context.Context, in *UpdateOpinionEventStatusReq, opts ...grpc.CallOption) (*OpinionEventInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpinionEventInfo)
+	err := c.cc.Invoke(ctx, AppService_UpdateOpinionEventStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AppServiceServer is the server API for AppService service.
 // All implementations must embed UnimplementedAppServiceServer
 // for forward compatibility.
@@ -645,6 +729,13 @@ type AppServiceServer interface {
 	GetPublicOpinionImportTask(context.Context, *GetPublicOpinionImportTaskReq) (*OpinionImportTaskInfo, error)
 	ListPublicOpinionItems(context.Context, *ListPublicOpinionItemsReq) (*PublicOpinionItemList, error)
 	GetPublicOpinionItem(context.Context, *GetPublicOpinionItemReq) (*PublicOpinionItemInfo, error)
+	CreateOpinionEvent(context.Context, *CreateOpinionEventReq) (*OpinionEventInfo, error)
+	UpdateOpinionEvent(context.Context, *UpdateOpinionEventReq) (*OpinionEventInfo, error)
+	ListOpinionEvents(context.Context, *ListOpinionEventsReq) (*OpinionEventList, error)
+	GetOpinionEvent(context.Context, *GetOpinionEventReq) (*OpinionEventDetail, error)
+	AddOpinionEventItems(context.Context, *ChangeOpinionEventItemsReq) (*OpinionEventDetail, error)
+	RemoveOpinionEventItems(context.Context, *ChangeOpinionEventItemsReq) (*OpinionEventDetail, error)
+	UpdateOpinionEventStatus(context.Context, *UpdateOpinionEventStatusReq) (*OpinionEventInfo, error)
 	mustEmbedUnimplementedAppServiceServer()
 }
 
@@ -789,6 +880,27 @@ func (UnimplementedAppServiceServer) ListPublicOpinionItems(context.Context, *Li
 }
 func (UnimplementedAppServiceServer) GetPublicOpinionItem(context.Context, *GetPublicOpinionItemReq) (*PublicOpinionItemInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPublicOpinionItem not implemented")
+}
+func (UnimplementedAppServiceServer) CreateOpinionEvent(context.Context, *CreateOpinionEventReq) (*OpinionEventInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOpinionEvent not implemented")
+}
+func (UnimplementedAppServiceServer) UpdateOpinionEvent(context.Context, *UpdateOpinionEventReq) (*OpinionEventInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateOpinionEvent not implemented")
+}
+func (UnimplementedAppServiceServer) ListOpinionEvents(context.Context, *ListOpinionEventsReq) (*OpinionEventList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListOpinionEvents not implemented")
+}
+func (UnimplementedAppServiceServer) GetOpinionEvent(context.Context, *GetOpinionEventReq) (*OpinionEventDetail, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOpinionEvent not implemented")
+}
+func (UnimplementedAppServiceServer) AddOpinionEventItems(context.Context, *ChangeOpinionEventItemsReq) (*OpinionEventDetail, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddOpinionEventItems not implemented")
+}
+func (UnimplementedAppServiceServer) RemoveOpinionEventItems(context.Context, *ChangeOpinionEventItemsReq) (*OpinionEventDetail, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveOpinionEventItems not implemented")
+}
+func (UnimplementedAppServiceServer) UpdateOpinionEventStatus(context.Context, *UpdateOpinionEventStatusReq) (*OpinionEventInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateOpinionEventStatus not implemented")
 }
 func (UnimplementedAppServiceServer) mustEmbedUnimplementedAppServiceServer() {}
 func (UnimplementedAppServiceServer) testEmbeddedByValue()                    {}
@@ -1621,6 +1733,132 @@ func _AppService_GetPublicOpinionItem_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AppService_CreateOpinionEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOpinionEventReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).CreateOpinionEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_CreateOpinionEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).CreateOpinionEvent(ctx, req.(*CreateOpinionEventReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_UpdateOpinionEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOpinionEventReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).UpdateOpinionEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_UpdateOpinionEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).UpdateOpinionEvent(ctx, req.(*UpdateOpinionEventReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_ListOpinionEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOpinionEventsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).ListOpinionEvents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_ListOpinionEvents_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).ListOpinionEvents(ctx, req.(*ListOpinionEventsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_GetOpinionEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOpinionEventReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).GetOpinionEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_GetOpinionEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).GetOpinionEvent(ctx, req.(*GetOpinionEventReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_AddOpinionEventItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeOpinionEventItemsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).AddOpinionEventItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_AddOpinionEventItems_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).AddOpinionEventItems(ctx, req.(*ChangeOpinionEventItemsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_RemoveOpinionEventItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeOpinionEventItemsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).RemoveOpinionEventItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_RemoveOpinionEventItems_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).RemoveOpinionEventItems(ctx, req.(*ChangeOpinionEventItemsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AppService_UpdateOpinionEventStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOpinionEventStatusReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServiceServer).UpdateOpinionEventStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppService_UpdateOpinionEventStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServiceServer).UpdateOpinionEventStatus(ctx, req.(*UpdateOpinionEventStatusReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AppService_ServiceDesc is the grpc.ServiceDesc for AppService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1807,6 +2045,34 @@ var AppService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPublicOpinionItem",
 			Handler:    _AppService_GetPublicOpinionItem_Handler,
+		},
+		{
+			MethodName: "CreateOpinionEvent",
+			Handler:    _AppService_CreateOpinionEvent_Handler,
+		},
+		{
+			MethodName: "UpdateOpinionEvent",
+			Handler:    _AppService_UpdateOpinionEvent_Handler,
+		},
+		{
+			MethodName: "ListOpinionEvents",
+			Handler:    _AppService_ListOpinionEvents_Handler,
+		},
+		{
+			MethodName: "GetOpinionEvent",
+			Handler:    _AppService_GetOpinionEvent_Handler,
+		},
+		{
+			MethodName: "AddOpinionEventItems",
+			Handler:    _AppService_AddOpinionEventItems_Handler,
+		},
+		{
+			MethodName: "RemoveOpinionEventItems",
+			Handler:    _AppService_RemoveOpinionEventItems_Handler,
+		},
+		{
+			MethodName: "UpdateOpinionEventStatus",
+			Handler:    _AppService_UpdateOpinionEventStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

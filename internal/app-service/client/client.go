@@ -90,6 +90,13 @@ type IClient interface {
 	GetOpinionImportTask(ctx context.Context, taskID uint32, orgID string) (*model.OpinionImportTask, *err_code.Status)
 	ImportPublicOpinion(ctx context.Context, input orm.PublicOpinionImportInput) (*model.OpinionImportTask, *err_code.Status)
 	CreateOpinionItem(ctx context.Context, item *model.OpinionItem) *err_code.Status
-	ListOpinionItems(ctx context.Context, filter orm.PublicOpinionListFilter) ([]*model.OpinionItem, int64, *err_code.Status)
-	GetOpinionItem(ctx context.Context, itemID uint32, orgID string) (*model.OpinionItem, *err_code.Status)
+	ListOpinionItems(ctx context.Context, filter orm.PublicOpinionListFilter) ([]*orm.OpinionItemWithEvent, int64, *err_code.Status)
+	GetOpinionItem(ctx context.Context, itemID uint32, orgID string) (*orm.OpinionItemWithEvent, *err_code.Status)
+	CreateOpinionEvent(ctx context.Context, input orm.CreateOpinionEventInput) (*orm.OpinionEventWithCount, *err_code.Status)
+	UpdateOpinionEvent(ctx context.Context, input orm.UpdateOpinionEventInput) (*orm.OpinionEventWithCount, *err_code.Status)
+	ListOpinionEvents(ctx context.Context, filter orm.OpinionEventListFilter) ([]*orm.OpinionEventWithCount, int64, *err_code.Status)
+	GetOpinionEvent(ctx context.Context, eventID uint32, orgID string) (*orm.OpinionEventDetail, *err_code.Status)
+	AddOpinionEventItems(ctx context.Context, input orm.ChangeOpinionEventItemsInput) (*orm.OpinionEventDetail, *err_code.Status)
+	RemoveOpinionEventItems(ctx context.Context, input orm.ChangeOpinionEventItemsInput) (*orm.OpinionEventDetail, *err_code.Status)
+	UpdateOpinionEventStatus(ctx context.Context, eventID uint32, orgID, status string) (*orm.OpinionEventWithCount, *err_code.Status)
 }

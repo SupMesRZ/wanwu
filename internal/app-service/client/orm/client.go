@@ -165,6 +165,8 @@ func NewClient(db *gorm.DB) (*Client, error) {
 		model.APIKeyStatistic{},
 		model.OpinionImportTask{},
 		model.OpinionItem{},
+		model.OpinionEvent{},
+		model.OpinionEventItem{},
 	); err != nil {
 		return nil, err
 	}
