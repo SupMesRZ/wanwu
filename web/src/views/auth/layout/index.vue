@@ -9,7 +9,7 @@
           v-if="commonInfo?.data?.login?.logo?.path"
           style="max-height: 60px; max-width: 220px; margin: 0 15px 0 22px"
           :src="avatarSrc(commonInfo.data.login.logo.path)"
-          alt=""
+          alt="河北大学"
         />
         <!--<span style="font-size: 16px;">{{commonInfo.home.title || ''}}</span>-->
         <!--<div style="margin-left: 10px">
@@ -52,7 +52,7 @@ export default {
   },
   created() {
     this.getCommonInfo().then(() => {
-      replaceTitle(this.commonInfo?.data?.tab?.title || '');
+      replaceTitle(this.$t('header.title'));
       replaceIcon(this.commonInfo?.data?.tab?.logo?.path || '');
     });
   },

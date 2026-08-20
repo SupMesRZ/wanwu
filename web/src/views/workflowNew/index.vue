@@ -11,9 +11,7 @@ export default {
     const query = `?workflow_id=${this.$route.query.id}&space_id=${this.$store.state.user.userInfo.orgId}`;
     return {
       workflowUrl:
-        process.env.NODE_ENV === 'development'
-          ? `http://localhost:8282/workflow${query}`
-          : window.location.origin + this.$basePath + `/workflow/${query}`,
+        window.location.origin + this.$basePath + `/workflow/${query}`,
     };
   },
 };

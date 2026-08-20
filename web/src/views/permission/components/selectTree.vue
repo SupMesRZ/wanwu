@@ -62,6 +62,17 @@ export default {
     };
   },
   watch: {
+    dataList: {
+      deep: true,
+      handler(newVal) {
+        this.data = newVal || [];
+        this.$nextTick(() => {
+          if (this.$refs.tree) {
+            this.$refs.tree.setCheckedKeys(this.choosedValue);
+          }
+        });
+      },
+    },
     defaultValue(newVal) {
       const { value, label } = this.defaultProps;
       this.choosedValue = newVal.map(item => item[value]);

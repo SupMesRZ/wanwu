@@ -16,11 +16,13 @@
                 v-if="!isCollapse"
                 style="max-height: 46px; max-width: 80%"
                 :src="avatarSrc(homeLogoPath)"
+                alt="河北大学"
               />
               <img
                 v-else
                 :src="avatarSrc(tabLogoPath)"
                 style="height: 36px; width: 36px; object-fit: contain"
+                alt="河北大学"
               />
             </div>
           </div>
@@ -164,9 +166,7 @@
                     placement="top-start"
                   >
                     <div class="current-org-name">
-                      {{
-                        getCurrentOrgName() || $t('header.org.noSelection')
-                      }}
+                      {{ getCurrentOrgName() || $t('header.org.noSelection') }}
                     </div>
                   </el-tooltip>
                 </div>
@@ -318,7 +318,6 @@
         </el-main>
       </el-container>
     </el-container>
-    <AboutDialog ref="aboutDialog" />
   </div>
 </template>
 
@@ -338,12 +337,11 @@ import {
 } from '@/utils/util';
 import ChangeLang from '@/components/changeLang.vue';
 import ChangeOrg from '@/components/changeOrg.vue';
-import AboutDialog from '@/components/aboutDialog.vue';
 import { DOC_FIRST_KEY } from '@/views/docCenter/constants';
 
 export default {
   name: 'Layout',
-  components: { ChangeLang, ChangeOrg, AboutDialog },
+  components: { ChangeLang, ChangeOrg },
   data() {
     return {
       menuHover: false,
@@ -351,7 +349,6 @@ export default {
       homeLogoPath: '',
       tabLogoPath: '',
       bgColor: '',
-      version: '',
       orgList: [],
       org: { orgId: '' },
       orgSwitcherExpanded: false,
@@ -384,45 +381,25 @@ export default {
         ],
         [
           {
+            name: this.$t('menu.platformIntroduction'),
+            path: '/platformIntro',
+            img: require('@/assets/imgs/about_icon.svg'),
+          },
+          {
+            name: this.$t('menu.campusServiceManagement'),
+            path: '/adminDashboard',
+            img: require('@/assets/imgs/setting_icon.svg'),
+            perm: [PERMS.ADMIN_CENTER, PERMS.OBSERVATION_STATISTIC],
+          },
+          {
             name: this.$t('menu.helpDoc'),
             img: require('@/assets/imgs/helpDoc_icon.svg'),
             icon: require('@/assets/imgs/link_icon.png'),
             redirect: () => {
-              // open('https://github.com/UnicomAI/wanwu/tree/main/docs/manual')
               open(
                 location.origin +
                   `${this.$basePath}/aibase/docCenter/pages/${DOC_FIRST_KEY}`,
               );
-            },
-          },
-          {
-            name: this.$t('menu.openSource'),
-            img: require('@/assets/imgs/openSource.svg'),
-            icon: require('@/assets/imgs/link_icon.png'),
-            perm: PERMS.OPEN_SOURCE,
-            children: [
-              {
-                name: 'Github',
-                img: require('@/assets/imgs/github_icon.svg'),
-                redirect: () => {
-                  open('https://github.com/UnicomAI/wanwu');
-                },
-              },
-              {
-                name: 'Gitee',
-                img: require('@/assets/imgs/gitee_icon.svg'),
-                redirect: () => {
-                  open('https://gitee.com/UnicomAI/wanwu');
-                },
-              },
-            ],
-          },
-          {
-            name: this.$t('menu.about'),
-            img: require('@/assets/imgs/about_icon.svg'),
-            version: 'version',
-            redirect: () => {
-              this.$refs.aboutDialog && this.$refs.aboutDialog.openDialog();
             },
           },
         ],
@@ -459,13 +436,12 @@ export default {
     },
     commonInfo: {
       handler(val) {
-        const { home = {}, tab = {}, about = {} } = val.data || {};
+        const { home = {}, tab = {} } = val.data || {};
         this.homeLogoPath = home.logo ? home.logo.path : '';
         this.tabLogoPath = tab.logo ? tab.logo.path : '';
         this.bgColor = home.backgroundColor || this.$config.backgroundColor;
-        this.version = about.version || '1.0';
         replaceIcon(tab.logo ? tab.logo.path : '');
-        replaceTitle(tab.title);
+        replaceTitle(this.$t('header.title'));
       },
       deep: true,
     },
@@ -492,19 +468,7 @@ export default {
       'userAvatar',
     ]),
     menuList() {
-      const MENU_NAME_MAP = {
-        'generalAgent-wanwuAgent':
-          this.commonInfo?.data?.generalAgent?.menuName,
-      };
-
-      if (!Object.values(MENU_NAME_MAP).some(Boolean)) return rawMenuList;
-
-      return rawMenuList.map(group => ({
-        ...group,
-        children: (group.children ?? []).map(c =>
-          MENU_NAME_MAP[c.index] ? { ...c, name: MENU_NAME_MAP[c.index] } : c,
-        ),
-      }));
+      return rawMenuList;
     },
   },
   async created() {

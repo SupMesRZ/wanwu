@@ -79,6 +79,27 @@ const constantRoutes = [
         meta: { perm: [PERMS.OPERATION] },
       },
       {
+        path: '/platformIntro',
+        component: resolve =>
+          require(['@/views/platformIntroduction/index.vue'], resolve),
+      },
+      {
+        path: '/smartAssistant',
+        component: resolve =>
+          require(['@/views/smartAssistant/index.vue'], resolve),
+      },
+      {
+        path: '/businessCenter',
+        component: resolve =>
+          require(['@/views/businessCenter/index.vue'], resolve),
+      },
+      {
+        path: '/adminDashboard',
+        component: resolve =>
+          require(['@/views/adminDashboard/index.vue'], resolve),
+        meta: { perm: [PERMS.ADMIN_CENTER, PERMS.OBSERVATION_STATISTIC] },
+      },
+      {
         path: '/docCenter/pages/:id(.*)*',
         component: resolve => require(['@/views/docCenter'], resolve),
       },

@@ -255,6 +255,11 @@ import { PERMS } from '@/router/constants';
 import { avatarSrc } from '@/utils/util';
 import { OrgTagColorList } from '@/utils/commonSet';
 import UploadAvatar from '@/components/uploadAvatar.vue';
+import {
+  formatPermissionItem,
+  formatPermissionTree,
+  isPermissionVisible,
+} from './permissionDisplay';
 
 export default {
   components: {
@@ -324,7 +329,7 @@ export default {
     },
     async getPermTree() {
       const { data } = await fetchPermTree({ orgId: this.selectedOrgId });
-      this.permList = data.routes || [];
+      this.permList = formatPermissionTree(data.routes);
     },
     async getTableData() {
       const searchInput = this.$refs.searchInput;
@@ -373,11 +378,12 @@ export default {
       const permKeys = perms.map(item => item.perm);
       return (
         perms
+          .filter(isPermissionVisible)
           .map(item => {
             if (permKeys.some(key => key.includes(`${item.perm}.`))) {
               return null;
             } else {
-              return item;
+              return formatPermissionItem(item);
             }
           })
           .filter(item => item) || []

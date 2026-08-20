@@ -111,7 +111,7 @@
         </p>
       </div>
       <div class="bottom-text">
-        {{ commonInfo?.data?.login?.platformDesc }}
+        {{ $t('brand.description') }}
       </div>
     </div>
   </div>

@@ -6,7 +6,7 @@
           v-if="commonInfo?.data?.login?.logo?.path"
           class="logo"
           :src="avatarSrc(commonInfo.data.login.logo.path)"
-          alt=""
+          alt="河北大学"
         />
         <span class="title">{{ $t('oauth.popup.title') }}</span>
       </div>
@@ -62,7 +62,7 @@ export default {
   mounted() {
     this.params = this.$route.query;
     this.getCommonInfo().then(() => {
-      replaceTitle(this.commonInfo?.data?.tab?.title || '');
+      replaceTitle(this.$t('header.title'));
       replaceIcon(this.commonInfo?.data?.tab?.logo?.path || '');
     });
   },

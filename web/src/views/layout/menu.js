@@ -3,232 +3,121 @@ import { i18n } from '@/lang';
 import { basePath, vegaOrigin } from '@/utils/config';
 
 /**
- *  index: 为唯一标识，children 下定义的 index 标准为： 父级 index-子级定义的唯一标识
+ * 左侧菜单按产品使用对象分为三层：
+ * 1. 智慧校园：学生、教师和管理人员使用的校园服务入口；
+ * 2. 智能服务：智能体与工作流的开发、发布入口；
+ * 3. 平台能力：知识、MCP、数据和模型等技术底座。
+ *
+ * index 为唯一标识，children 下的 index 使用“父级-子级”格式。
  */
 export const menuList = [
   {
-    name: i18n.t('menu.generalAgent'),
-    index: 'generalAgent',
-    perm: [PERMS.WGA],
+    name: i18n.t('menu.smartCampus'),
+    index: 'smartCampus',
     children: [
       {
-        name: i18n.t('menu.wanwuAgent'),
-        index: 'generalAgent-wanwuAgent',
+        name: i18n.t('menu.smartAssistant'),
+        index: 'smartCampus-smartAssistant',
         icon: 'menu_robot',
-        path: '/generalAgent',
-        perm: PERMS.WGA_WANWU_BOT,
+        path: '/smartAssistant',
       },
       {
-        name: i18n.t('menu.aiAssistant'),
-        index: 'generalAgent-aiAssistant',
-        icon: 'menu_openClaw',
-        path: '/aiAssistant',
-        perm: PERMS.WGA_OPENCLAW,
+        name: i18n.t('menu.businessCenter'),
+        index: 'smartCampus-businessCenter',
+        icon: 'menu_appSquare',
+        path: '/businessCenter',
       },
-    ],
-  },
-  {
-    name: i18n.t('menu.campusGovernance'),
-    index: 'campusGovernance',
-    // 兼容尚未注册独立舆情权限的旧版 BFF，避免滚动升级期间入口消失。
-    perm: [PERMS.PUBLIC_OPINION, PERMS.APP_OBSERVATION],
-    children: [
       {
-        name: i18n.t('menu.publicOpinion'),
-        index: 'publicOpinion',
+        name: i18n.t('menu.smartCampusDashboard'),
+        index: 'smartCampus-adminDashboard',
         icon: 'menu_statistics',
-        path: '/publicOpinion',
-        perm: [PERMS.PUBLIC_OPINION, PERMS.OBSERVATION_STATISTIC],
+        path: '/adminDashboard',
+        perm: [PERMS.ADMIN_CENTER, PERMS.OBSERVATION_STATISTIC],
       },
     ],
   },
   {
-    name: i18n.t('menu.ontologyAgent'),
-    index: 'ontologyAgent',
-    perm: [PERMS.ONTOLOGY],
+    name: i18n.t('menu.intelligentService'),
+    index: 'intelligentService',
+    perm: [PERMS.AGENT, PERMS.RAG, PERMS.WORKFLOW, PERMS.EXPLORE],
     children: [
       {
-        name: i18n.t('menu.digitalHuman'),
-        index: 'ontologyAgent-digital-human',
-        icon: 'menu_team',
-        perm: PERMS.ONTOLOGY_DATA_SOURCE,
-        redirect: () => {
-          location.href = vegaOrigin + basePath + '/vega/digital-human';
-        },
+        name: i18n.t('menu.agentDevelopment'),
+        index: 'intelligentService-agent',
+        icon: 'menu_agent',
+        path: '/appSpace/agent',
+        perm: PERMS.AGENT,
       },
       {
-        name: i18n.t('menu.ontology'),
-        index: 'ontologyAgent-ontology',
-        icon: 'menu_net',
-        perm: PERMS.ONTOLOGY_KNOWLEDGE_NETWORK,
-        redirect: () => {
-          location.href = vegaOrigin + basePath + '/vega/ontology';
-        },
+        name: i18n.t('menu.knowledgeAppDevelopment'),
+        index: 'intelligentService-rag',
+        icon: 'menu_rag',
+        path: '/appSpace/rag',
+        perm: PERMS.RAG,
       },
       {
-        name: i18n.t('menu.dataConnect'),
-        index: 'ontologyAgent-data-connect',
+        name: i18n.t('menu.workflowOrchestration'),
+        index: 'intelligentService-workflow',
+        icon: 'menu_workflow',
+        path: '/appSpace/workflow',
+        perm: PERMS.WORKFLOW,
+      },
+      {
+        name: i18n.t('menu.appServiceManagement'),
+        index: 'intelligentService-appService',
+        icon: 'menu_develop',
+        path: '/explore',
+        perm: PERMS.EXPLORE,
+      },
+    ],
+  },
+  {
+    name: i18n.t('menu.platformCapability'),
+    index: 'platformCapability',
+    perm: [
+      PERMS.KNOWLEDGE,
+      PERMS.SKILL,
+      PERMS.MCP_SERVICE,
+      PERMS.ONTOLOGY_DATA_SOURCE,
+      PERMS.MODEL_MANAGE,
+    ],
+    children: [
+      {
+        name: i18n.t('menu.campusKnowledge'),
+        index: 'platformCapability-knowledge',
+        icon: 'menu_knowledge',
+        path: '/knowledge',
+        perm: PERMS.KNOWLEDGE,
+      },
+      {
+        name: i18n.t('menu.skillCenter'),
+        index: 'platformCapability-skill',
+        icon: 'menu_skills',
+        path: '/skill',
+        perm: PERMS.SKILL,
+      },
+      {
+        name: i18n.t('menu.capabilityConnection'),
+        index: 'platformCapability-mcp',
+        icon: 'menu_mcpService',
+        path: '/mcpService',
+        perm: PERMS.MCP_SERVICE,
+      },
+      {
+        name: i18n.t('menu.dataResource'),
+        index: 'platformCapability-data',
         icon: 'menu_link',
         perm: PERMS.ONTOLOGY_DATA_SOURCE,
         redirect: () => {
           location.href = vegaOrigin + basePath + '/vega/data-connect';
         },
       },
-    ],
-  },
-  {
-    name: i18n.t('menu.modelService'),
-    index: 'modelService',
-    perm: [PERMS.MODEL_SERVICE],
-    children: [
       {
         name: i18n.t('menu.modelAccess'),
-        index: 'modelService-modelAccess',
+        index: 'platformCapability-model',
         icon: 'menu_model',
         path: '/modelAccess',
         perm: PERMS.MODEL_MANAGE,
-      },
-    ],
-  },
-  {
-    name: i18n.t('menu.resource'),
-    index: 'resource',
-    perm: [PERMS.RESOURCE],
-    children: [
-      {
-        name: i18n.t('menu.knowledge'),
-        index: 'resource-knowledge',
-        icon: 'menu_knowledge',
-        path: '/knowledge',
-        perm: PERMS.KNOWLEDGE,
-      },
-      {
-        name: i18n.t('menu.mcpService'),
-        index: 'resource-mcpService',
-        icon: 'menu_mcpService',
-        path: '/mcpService',
-        perm: PERMS.MCP_SERVICE,
-      },
-      {
-        name: i18n.t('menu.tool'),
-        index: 'resource-tool',
-        icon: 'menu_tools',
-        path: '/tool',
-        perm: PERMS.TOOL,
-      },
-      {
-        name: i18n.t('menu.prompt'),
-        index: 'resource-prompt',
-        icon: 'menu_prompt',
-        path: '/prompt',
-        perm: PERMS.PROMPT,
-      },
-      {
-        name: 'Skills',
-        index: 'resource-skill',
-        icon: 'menu_skills',
-        path: '/skill',
-        perm: PERMS.SKILL,
-      },
-      {
-        name: i18n.t('menu.safetyGuard'),
-        index: 'resource-safetyGuard',
-        icon: 'menu_safety',
-        path: '/safety',
-        perm: PERMS.SAFETY,
-      },
-    ],
-  },
-  {
-    name: i18n.t('menu.app.index'),
-    index: 'appSpace',
-    perm: [PERMS.APP_SPACE],
-    children: [
-      {
-        name: i18n.t('menu.app.rag'),
-        index: 'appSpace-rag',
-        icon: 'menu_rag',
-        path: '/appSpace/rag',
-        perm: PERMS.RAG,
-      },
-      {
-        name: i18n.t('menu.app.workflow'),
-        index: 'appSpace-workflow',
-        icon: 'menu_workflow',
-        path: '/appSpace/workflow',
-        perm: PERMS.WORKFLOW,
-      },
-      {
-        name: i18n.t('menu.app.agent'),
-        index: 'appSpace-agent',
-        icon: 'menu_agent',
-        path: '/appSpace/agent',
-        perm: PERMS.AGENT,
-      },
-    ],
-  },
-  {
-    name: i18n.t('menu.square'),
-    index: 'square',
-    perm: [PERMS.SQUARE],
-    icon: 'square',
-    children: [
-      {
-        name: i18n.t('menu.explore'),
-        index: 'square-explore',
-        icon: 'menu_appSquare',
-        path: '/explore',
-        perm: PERMS.EXPLORE,
-      },
-      {
-        name: i18n.t('menu.mcp'),
-        index: 'square-mcpManage',
-        icon: 'menu_mcpSquare',
-        path: '/mcp',
-        perm: PERMS.MCP,
-      },
-      {
-        name: i18n.t('menu.templateSquare'),
-        index: 'square-templateSquare',
-        icon: 'menu_templateSquare',
-        path: '/templateSquare',
-        perm: PERMS.TEMPLATE,
-      },
-      {
-        name: i18n.t('menu.skillSquare'),
-        index: 'square-skillSquare',
-        icon: 'menu_skillSquare',
-        path: '/skillSquare',
-        perm: PERMS.SKILL_SQUARE,
-      },
-    ],
-  },
-  {
-    name: i18n.t('menu.appObservation'),
-    index: 'appObservation',
-    perm: [PERMS.APP_OBSERVATION],
-    children: [
-      {
-        name: i18n.t('menu.statisticsDashboard'),
-        index: 'appObservation-statisticsDashboard',
-        icon: 'menu_statistics',
-        path: '/statisticsDashboard',
-        perm: PERMS.OBSERVATION_STATISTIC,
-      },
-    ],
-  },
-  {
-    name: i18n.t('menu.apiKey'),
-    index: 'apiKey',
-    icon: 'apiKey',
-    perm: [PERMS.API_KEY],
-    children: [
-      {
-        name: i18n.t('menu.apiKey'),
-        index: 'apiKey-openApiKey',
-        icon: 'menu_apiKey',
-        path: '/openApiKey',
-        perm: PERMS.API_KEY_MANAGE,
       },
     ],
   },

@@ -99,7 +99,7 @@
         </p>
       </div>
       <div class="bottom-text">
-        {{ commonInfo?.data?.login?.platformDesc }}
+        {{ $t('brand.description') }}
       </div>
     </div>
     <dialog2FA ref="dialog2FA"></dialog2FA>

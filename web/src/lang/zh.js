@@ -1,5 +1,9 @@
 ﻿// 中文文件
 export default {
+  brand: {
+    name: '河小智——河北大学智能体服务平台',
+    description: '河小智——河北大学智能体服务平台',
+  },
   login: {
     title: '登 录',
     form: {
@@ -51,11 +55,6 @@ export default {
     login: '立即登录',
     button: '确 认',
   },
-  about: {
-    version: '版本',
-    currentVersion: '当前版本：',
-    log: '更新日志：',
-  },
   aiAssistant: {
     serviceUnavailable: 'OpenClaw服务暂不可用',
     refreshMessage: '请部署OpenClaw客户端并开启服务后刷新界面',
@@ -64,9 +63,20 @@ export default {
     connecting: '正在连接服务...',
   },
   menu: {
-    generalAgent: '通用智能体',
-    wanwuAgent: 'Hermes 智能体',
-    aiAssistant: '河小智智能体',
+    smartCampus: '智慧校园',
+    smartAssistant: '河小智助手',
+    businessCenter: '校园业务中心',
+    smartCampusDashboard: '智慧校园管理中心',
+    intelligentService: '智能服务',
+    agentDevelopment: '智能体工作台',
+    knowledgeAppDevelopment: '知识应用开发',
+    workflowOrchestration: '工作流编排',
+    appServiceManagement: '应用服务管理',
+    platformCapability: '平台能力',
+    campusKnowledge: '校园知识中心',
+    skillCenter: '技能中心',
+    capabilityConnection: '能力连接中心',
+    dataResource: '数据资源中心',
     ontologyAgent: '本体智能体',
     dataConnect: '数据连接',
     digitalHuman: '数字员工',
@@ -112,10 +122,10 @@ export default {
     org: '组织管理',
     modelAccess: '模型管理',
     modelExprience: '模型体验',
-    about: '关于',
+    platformIntroduction: '平台介绍',
+    campusServiceManagement: '智慧校园服务管理',
     helpDoc: '帮助文档',
     back: '返回',
-    openSource: '开源仓库',
     skillSquare: 'Skill广场',
   },
   publicOpinion: {
@@ -253,7 +263,7 @@ export default {
       spreadTrend: '传播态势',
       responseSuggestion: '回应建议',
       serviceSuggestion: '服务优化建议',
-      hermesTitle: 'Hermes 智能研判',
+      hermesTitle: '河小智智能研判',
       building: '功能建设中',
       modelPending: '待接入模型',
       modelDescription: '本阶段仅展示界面，不调用模型、工作流或知识库。',
@@ -271,7 +281,7 @@ export default {
     },
   },
   header: {
-    title: '河北大学 Hermes 智能体平台',
+    title: '河小智——河北大学智能体服务平台',
     doc: '文档中心',
     logout: '登出',
     login: '登录',
@@ -1213,7 +1223,7 @@ export default {
     externalSource: '外部知识库来源',
     externalAPI: {
       title: '外部知识库API',
-      hint: '支持用户通过API关联河北大学 Hermes 智能体平台以外的知识库并从中检索知识。',
+      hint: '支持用户通过API关联河小智平台以外的知识库并从中检索知识。',
       tips: '如何创建并获取外部知识库API',
       name: 'API名称',
       desc: 'API描述',
@@ -2308,7 +2318,7 @@ export default {
     edit: '编辑OAuth密钥',
     deleteHint: '确定要删除该OAuth密钥吗？',
     popup: {
-      title: '使用河北大学 Hermes 智能体平台账号登录',
+      title: '使用河小智平台账号登录',
       perm: '将获得以下权限：',
       detail: '访问您的个人资料（包括用户名、头像）等基础信息',
     },
@@ -2549,7 +2559,7 @@ export default {
       search: '搜索',
     },
     header: {
-      welcomeTitle: '你好，我是河北大学 Hermes 智能体',
+      welcomeTitle: '你好，我是河小智',
       config: '配置',
       importSkill: '导入Skill',
       uploadFile: '上传文件',

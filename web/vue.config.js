@@ -11,8 +11,7 @@ function resolve(dir) {
 const CompressionWebpackPlugin = require('compression-webpack-plugin');
 const isProdOrTest = process.env.NODE_ENV !== 'development';
 
-const proxyUrl =
-  process.env.VUE_APP_PROXY_URL || 'http://localhost:8081';
+const proxyUrl = process.env.VUE_APP_PROXY_URL || 'http://localhost:8081';
 
 module.exports = {
   // 基础配置 详情看文档
@@ -101,6 +100,11 @@ module.exports = {
       'Access-Control-Allow-Origin': '*',
     },
     proxy: {
+      '/vega': {
+        target: proxyUrl,
+        changeOrigin: true,
+        secure: false,
+      },
       '/openAi': {
         target: proxyUrl,
         changeOrigin: true,
@@ -112,6 +116,11 @@ module.exports = {
         secure: false,
       },
       '/workflow/api': {
+        target: proxyUrl,
+        changeOrigin: true,
+        secure: false,
+      },
+      '/workflow': {
         target: proxyUrl,
         changeOrigin: true,
         secure: false,

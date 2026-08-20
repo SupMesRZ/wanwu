@@ -9,6 +9,7 @@
         <div v-if="loadError" class="load-error">{{ loadError }}</div>
         <Chat
           v-else
+          ref="ragChat"
           :editForm="editForm"
           :chatType="'chat'"
           :maxPicNum="currentMaxPicNum"
@@ -52,6 +53,7 @@ export default {
       },
       modelOptions: [],
       loadError: '',
+      detailReady: false,
     };
   },
   computed: {
@@ -95,6 +97,18 @@ export default {
   },
 
   methods: {
+    ask(question) {
+      if (this.loadError) {
+        this.$message.warning(this.loadError);
+        return false;
+      }
+      if (!this.detailReady || !this.$refs.ragChat) {
+        this.$message.info('河小智知识服务正在加载，请稍后再试。');
+        return false;
+      }
+      this.$refs.ragChat.preSend(question);
+      return true;
+    },
     async getDetail() {
       try {
         const res = await getRagPublishedInfo({ ragId: this.editForm.appId });
@@ -121,7 +135,9 @@ export default {
           }),
         );
         await this.getModelData();
+        this.detailReady = true;
       } catch (error) {
+        this.detailReady = false;
         this.loadError = RAG_DETAIL_LOAD_FAILED_MESSAGE;
       }
     },

@@ -17,7 +17,7 @@
 
     <aside class="hermes-panel">
       <div class="hermes-title">
-        <span class="hermes-mark">H</span>
+        <span class="hermes-mark">河</span>
         <h3>{{ $t('publicOpinion.analysis.hermesTitle') }}</h3>
       </div>
       <div class="building-state">

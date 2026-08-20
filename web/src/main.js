@@ -23,7 +23,7 @@ import moment from 'moment';
 import 'element-ui/lib/theme-chalk/index.css';
 import '@/style/index.scss';
 import { config, basePath } from './utils/config';
-import { guid, copy } from '@/utils/util';
+import { guid, copy, replaceTitle } from '@/utils/util';
 
 Vue.use(ElementUi, {
   i18n: (key, value) => i18n.t(key, value), // 根据选的语言切换 Element-ui 的语言
@@ -35,6 +35,8 @@ Vue.prototype.$guid = guid;
 Vue.prototype.$copy = copy;
 
 Vue.config.productionTip = false;
+
+replaceTitle(i18n.t('header.title'));
 
 // 定义时间格式全局过滤器
 Vue.filter('dateFormat', function (daraStr, pattern = 'YYYY-MM-DD HH:mm:ss') {

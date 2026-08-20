@@ -3,8 +3,6 @@ export const PERMS = {
   SETTING: 'admin_center.setting', // 管理员中心-平台配置
   OAUTH: 'admin_center.oauth', // 管理员中心-OAuth密钥管理
 
-  OPEN_SOURCE: 'open_source', // 开源仓库
-
   WGA: 'wga', // 通用智能体
   WGA_WANWU_BOT: 'wga.wanwu_bot', // 通用智能体-WanwuBot
   WGA_OPENCLAW: 'wga.openclaw', // 通用智能体-OpenClaw

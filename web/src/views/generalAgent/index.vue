@@ -1,5 +1,5 @@
 <template>
-  <div class="general-agent-page">
+  <div :class="['general-agent-page', { embedded }]">
     <!-- 主内容区 -->
     <div
       :class="{
@@ -187,16 +187,18 @@
             v-if="isEmptyConversation && !isLoadingHistory"
             class="welcome-section"
           >
-            <div class="welcome-avatar">
-              <img
-                v-if="assistantAvatar"
-                :src="assistantAvatar"
-                alt="Assistant"
-              />
-            </div>
-            <div class="welcome-title">
-              {{ welcomeText || $t('generalAgent.header.welcomeTitle') }}
-            </div>
+            <slot name="welcome">
+              <div class="welcome-avatar">
+                <img
+                  v-if="assistantAvatar"
+                  :src="assistantAvatar"
+                  alt="Assistant"
+                />
+              </div>
+              <div class="welcome-title">
+                {{ welcomeText || $t('generalAgent.header.welcomeTitle') }}
+              </div>
+            </slot>
           </div>
 
           <div class="input-container">
@@ -500,6 +502,7 @@ import { getCustomSkillInfo } from '@/api/templateSquare';
 import { selectModelList } from '@/api/modelAccess';
 import { avatarSrc, resDownloadFile } from '@/utils/util';
 import { mapActions, mapGetters } from 'vuex';
+import { normalizeBrandText } from '@/utils/brand';
 import { SSEEventParser } from './utils/sse-parser';
 // 引入工具函数
 import {
@@ -542,6 +545,10 @@ export default {
     mode: {
       type: String,
       default: '',
+    },
+    embedded: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -607,7 +614,10 @@ export default {
       return avatarSrc(this.commonInfo?.data?.generalAgent?.logo?.path);
     },
     welcomeText() {
-      return this.commonInfo?.data?.generalAgent?.welcomeText;
+      return normalizeBrandText(
+        this.commonInfo?.data?.generalAgent?.welcomeText,
+        this.$t('generalAgent.header.welcomeTitle'),
+      );
     },
 
     currentWorkspaceTree() {
@@ -1136,6 +1146,16 @@ export default {
 
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed;
+    },
+    async ask(content) {
+      const question = String(content || '').trim();
+      if (!question) return;
+      if (!this.modelList.length) await this.fetchModelList();
+      if (!this.selectedModel) {
+        this.$message.warning(this.$t('generalAgent.error.modelListLoading'));
+        return;
+      }
+      await this.sendMessage({ contentOverride: question });
     },
     async fetchModelList() {
       this.modelLoading = true;
@@ -2158,6 +2178,24 @@ export default {
 
   ::v-deep .model-select .el-input__inner {
     border-radius: 12px;
+  }
+
+  &.embedded {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    background: #fff;
+
+    .agent-main-content {
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .sidebar,
+    .header {
+      display: none;
+    }
   }
 }
 

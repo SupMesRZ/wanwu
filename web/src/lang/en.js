@@ -1,5 +1,9 @@
 // 英文文件
 export default {
+  brand: {
+    name: 'Hexiaozhi — Hebei University Agent Service Platform',
+    description: 'Hexiaozhi — Hebei University Agent Service Platform',
+  },
   login: {
     title: '登 录',
     form: {
@@ -51,11 +55,6 @@ export default {
     login: '立即登录',
     button: '确 认',
   },
-  about: {
-    version: '版本',
-    currentVersion: '当前版本：',
-    log: '更新日志：',
-  },
   aiAssistant: {
     serviceUnavailable: 'AI Assistant service is unavailable',
     refreshMessage: 'Please start the service and refresh the page',
@@ -64,10 +63,21 @@ export default {
     connecting: 'Connecting to service...',
   },
   menu: {
-    generalAgent: 'General Agent',
-    wga: 'Hermes Agent',
-    wanwuAgent: 'Hermes Agent',
-    aiAssistant: 'Hexiaozhi Agent',
+    smartCampus: 'Smart Campus',
+    smartAssistant: 'Hexiaozhi Assistant',
+    businessCenter: 'Campus Service Center',
+    smartCampusDashboard: 'Smart Campus Dashboard',
+    intelligentService: 'Intelligent Services',
+    agentDevelopment: 'Agent Workbench',
+    knowledgeAppDevelopment: 'Knowledge App Development',
+    workflowOrchestration: 'Workflow Orchestration',
+    appServiceManagement: 'Application Services',
+    platformCapability: 'Platform Capabilities',
+    campusKnowledge: 'Campus Knowledge Center',
+    skillCenter: 'Skill Center',
+    capabilityConnection: 'Capability Connection Center',
+    dataResource: 'Data Resource Center',
+    wga: 'Agent Workbench',
     ontologyAgent: 'Ontology Agent',
     dataConnect: 'Data Connect',
     ontology: 'Knowledge Network',
@@ -112,10 +122,10 @@ export default {
     org: '组织管理',
     modelAccess: '模型管理',
     modelExprience: '模型体验',
-    about: '关于',
+    platformIntroduction: 'Platform Introduction',
+    campusServiceManagement: 'Smart Campus Service Management',
     helpDoc: '帮助文档',
     back: '返回',
-    openSource: '开源仓库',
     skillSquare: 'Skill广场',
   },
   publicOpinion: {
@@ -259,7 +269,7 @@ export default {
       spreadTrend: 'Spread Trend',
       responseSuggestion: 'Response Suggestions',
       serviceSuggestion: 'Service Improvement Suggestions',
-      hermesTitle: 'Hermes Intelligent Analysis',
+      hermesTitle: 'Hexiaozhi Intelligent Analysis',
       building: 'Under Construction',
       modelPending: 'Model Integration Pending',
       modelDescription:
@@ -279,7 +289,7 @@ export default {
     },
   },
   header: {
-    title: 'HBU Hermes Agent Platform',
+    title: 'Hexiaozhi — Hebei University Agent Service Platform',
     doc: '文档中心',
     logout: '登出',
     login: '登录',
@@ -2129,7 +2139,7 @@ export default {
     edit: '编辑OAuth密钥',
     deleteHint: '确定要删除该OAuth密钥吗？',
     popup: {
-      title: 'Sign in with your HBU Hermes Agent Platform account',
+      title: 'Sign in with your Hexiaozhi platform account',
       perm: '将获得以下权限：',
       detail: '访问您的个人资料（包括用户名、头像）等基础信息',
     },
@@ -2320,7 +2330,7 @@ export default {
       search: 'Search',
     },
     header: {
-      welcomeTitle: "Hello, I'm HBU Hermes Agent",
+      welcomeTitle: "Hello, I'm Hexiaozhi",
       config: '配置',
       importSkill: 'Import Skill',
       uploadFile: '上传文件',
