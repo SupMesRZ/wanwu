@@ -10,6 +10,18 @@ import { fetchOrgs } from '@/api/permission/org';
 import { jumpOAuth, redirectUserInfoPage, deepMerge } from '@/utils/util';
 import { formatPerms } from '@/router/permission';
 import { replaceRouter } from '@/router';
+import {
+  createCampusRoleState,
+  resolveCampusRoleState,
+} from '@/utils/campusRole';
+
+const campusRoleFromPermission = (permission = {}, previewRole = null) =>
+  resolveCampusRoleState({
+    roles: permission.roles,
+    previewRole,
+    isAdmin: permission.isAdmin,
+    isSystem: permission.isSystem,
+  });
 
 const processLogin = (res, commit, params) => {
   const orgs = res.data.orgs || [];
@@ -37,6 +49,10 @@ const processLogin = (res, commit, params) => {
       isSystem,
       isUpdatePassword: res.data.isUpdatePassword,
     });
+    commit(
+      'setCampusRole',
+      campusRoleFromPermission({ ...permission, isAdmin, isSystem }),
+    );
     //配置导航用户logo和名称以及欢迎文字
     commit('setCommonInfo', { data: res.data.custom || {} });
 
@@ -59,6 +75,7 @@ export const user = {
   namespaced: true,
   state: {
     userInfo: { uid: '', userName: '', orgId: '' },
+    campusRole: createCampusRoleState(),
     orgInfo: { orgs: [] },
     token: '',
     expiresAt: 0,
@@ -107,6 +124,9 @@ export const user = {
     setUserInfo(state, userInfo) {
       state.userInfo = { ...state.userInfo, ...userInfo };
     },
+    setCampusRole(state, campusRole) {
+      state.campusRole = campusRole;
+    },
     setOrgInfo(state, orgInfo) {
       state.orgInfo = { ...state.orgInfo, ...orgInfo };
     },
@@ -130,6 +150,7 @@ export const user = {
     },
     LoginOut(state) {
       state.userInfo = {};
+      state.campusRole = createCampusRoleState();
       state.token = '';
       state.permission = {};
       localStorage.setItem('access_cert', JSON.stringify(state));
@@ -166,7 +187,7 @@ export const user = {
     },
 
     // 获取权限
-    async getPermissionInfo({ commit }) {
+    async getPermissionInfo({ commit, state }) {
       return new Promise(async (resolve, reject) => {
         let res = await getPermission();
         const orgPermission = res.data.orgPermission || {};
@@ -184,11 +205,16 @@ export const user = {
         if (res.code === 0) {
           commit('setUserAvatar', res.data.avatar.path);
           commit('setPermission', permission);
+          commit(
+            'setCampusRole',
+            campusRoleFromPermission(permission, state.campusRole?.previewRole),
+          );
           if (res.data.language) commit('setLang', res.data.language);
           replaceRouter(permission.orgPermission || []);
           resolve(permission);
         } else {
           commit('setPermission', {});
+          commit('setCampusRole', createCampusRoleState());
           replaceRouter([]);
           reject();
         }
@@ -201,6 +227,15 @@ export const user = {
 
     async LoginOut({ commit }) {
       commit('LoginOut');
+    },
+
+    setCampusPreviewRole({ commit, state }, previewRole) {
+      const campusRole = campusRoleFromPermission(
+        state.permission,
+        previewRole,
+      );
+      commit('setCampusRole', campusRole);
+      return campusRole;
     },
 
     async getOrgInfo({ commit }) {
@@ -231,6 +266,9 @@ export const user = {
     },
     userInfo(state) {
       return state.userInfo;
+    },
+    campusRole(state) {
+      return state.campusRole || createCampusRoleState();
     },
     orgInfo(state) {
       return state.orgInfo;

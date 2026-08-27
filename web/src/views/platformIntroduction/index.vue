@@ -51,18 +51,16 @@
         <div>
           <span class="section-kicker">QUICK DEMO</span>
           <h2>按角色开始演示</h2>
-          <p class="section-description">
-            建议按“师生体验 → 能力连接 → 管理分析”的顺序讲解。
-          </p>
+          <p class="section-description">{{ demoDescription }}</p>
         </div>
       </div>
       <div class="demo-grid">
         <button
           v-for="entry in visibleDemoEntries"
-          :key="entry.path"
+          :key="entry.key"
           type="button"
           class="demo-entry"
-          @click="goTo(entry.path)"
+          @click="goTo(entry.location)"
         >
           <span class="entry-icon" :class="entry.color">
             <i :class="entry.icon"></i>
@@ -113,6 +111,7 @@
 import { mapGetters } from 'vuex';
 import { avatarSrc } from '@/utils/util';
 import { checkPerm, PERMS } from '@/router/permission';
+import { getCampusRoleProfile } from '@/utils/campusRole';
 
 export default {
   name: 'PlatformIntroduction',
@@ -142,28 +141,61 @@ export default {
       ],
       demoEntries: [
         {
-          audience: '学生·教师',
-          title: '河小智助手',
-          description: '体验课表查询、请假、图书查询和校园知识问答。',
-          icon: 'el-icon-chat-line-round',
+          key: 'studentAssistant',
+          role: 'student',
+          audience: '本科生 · 研究生',
+          title: '河小智·学生助手',
+          description: '体验课表成绩查询、请假办理和个性化学习服务。',
+          icon: 'el-icon-reading',
           color: 'blue',
-          path: '/smartAssistant',
+          location: {
+            path: '/smartAssistant',
+            query: { previewRole: 'student' },
+          },
         },
         {
+          key: 'teacherAssistant',
+          role: 'teacher',
+          audience: '课程教师 · 教学人员',
+          title: '河小智·教师助手',
+          description: '体验智能备课、教学资源生成和学情反馈分析。',
+          icon: 'el-icon-notebook-2',
+          color: 'cyan',
+          location: {
+            path: '/smartAssistant',
+            query: { previewRole: 'teacher' },
+          },
+        },
+        {
+          key: 'adminAssistant',
+          role: 'academic_admin',
+          audience: '学院管理员 · 教务人员',
+          title: '河小智·教务助手',
+          description: '体验教学数据分析、统计报告和管理辅助决策。',
+          icon: 'el-icon-data-analysis',
+          color: 'violet',
+          location: {
+            path: '/smartAssistant',
+            query: { previewRole: 'academic_admin' },
+          },
+        },
+        {
+          key: 'businessCenter',
           audience: '平台建设人员',
           title: '校园业务中心',
           description: '查看教务、学工、图书馆与后勤服务的 AI 调用流程。',
           icon: 'el-icon-connection',
-          color: 'cyan',
-          path: '/businessCenter',
+          color: 'green',
+          location: { path: '/businessCenter' },
         },
         {
+          key: 'adminDashboard',
           audience: '学校管理人员',
           title: '智慧校园管理中心',
           description: '查看演示运行数据、服务热点和 AI 辅助决策。',
           icon: 'el-icon-data-line',
-          color: 'violet',
-          path: '/adminDashboard',
+          color: 'orange',
+          location: { path: '/adminDashboard' },
           perm: [PERMS.ADMIN_CENTER, PERMS.OBSERVATION_STATISTIC],
         },
       ],
@@ -187,9 +219,30 @@ export default {
     };
   },
   computed: {
-    ...mapGetters('user', ['commonInfo']),
+    ...mapGetters('user', ['commonInfo', 'campusRole']),
+    currentCampusRole() {
+      return getCampusRoleProfile(this.campusRole.effectiveRole);
+    },
+    canPreviewAllRoles() {
+      return this.campusRole.canPreview;
+    },
+    demoDescription() {
+      if (this.canPreviewAllRoles) {
+        return '管理员可直接切换三类角色，建议按“角色体验 → 能力连接 → 管理分析”的顺序讲解。';
+      }
+      return this.currentCampusRole
+        ? `已按${this.currentCampusRole.label}身份展示可用入口。`
+        : '当前账号尚未配置校园角色。';
+    },
     visibleDemoEntries() {
-      return this.demoEntries.filter(item => checkPerm(item.perm));
+      return this.demoEntries.filter(item => {
+        const matchesPermission = checkPerm(item.perm);
+        const matchesRole =
+          !item.role ||
+          this.canPreviewAllRoles ||
+          item.role === this.currentCampusRole?.key;
+        return matchesPermission && matchesRole;
+      });
     },
     schoolIconPath() {
       return (
@@ -201,8 +254,8 @@ export default {
   },
   methods: {
     avatarSrc,
-    goTo(path) {
-      this.$router.push(path);
+    goTo(location) {
+      this.$router.push(location);
     },
   },
 };
@@ -415,6 +468,16 @@ export default {
   &.violet {
     color: #7356c2;
     background: #f2effb;
+  }
+
+  &.green {
+    color: #16835f;
+    background: #eaf8f2;
+  }
+
+  &.orange {
+    color: #c87518;
+    background: #fff4e7;
   }
 }
 

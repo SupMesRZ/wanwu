@@ -39,14 +39,14 @@
           >
             <!-- 展开状态：扁平化分组列表 -->
             <div v-if="!isCollapse" class="flat-menu-list">
-              <template v-for="(n, i) in menuList" v-if="checkPerm(n.perm)">
+              <template v-for="(n, i) in menuList" v-if="checkMenu(n)">
                 <!-- 有子级：渲染每个子项 -->
                 <div v-if="n.children" :key="`${i}ml`" class="menu-group">
                   <div class="menu-group-title">{{ n.name }}</div>
                   <div
                     v-for="(m, j) in n.children"
                     :key="`${j}cl`"
-                    v-if="checkPerm(m.perm)"
+                    v-if="checkMenu(m)"
                     :class="[
                       'flat-menu-item',
                       { 'flat-menu-item-active': activeIndex === m.index },
@@ -82,7 +82,7 @@
 
             <!-- 收起状态：仅图标 + 分组分隔 -->
             <div v-else class="collapse-menu-list">
-              <template v-for="(n, i) in menuList" v-if="checkPerm(n.perm)">
+              <template v-for="(n, i) in menuList" v-if="checkMenu(n)">
                 <!-- 分组分隔线（非第一组） -->
                 <div
                   v-if="i > 0"
@@ -94,7 +94,7 @@
                   <div
                     v-for="(m, j) in n.children"
                     :key="`${i}-${j}cl`"
-                    v-if="checkPerm(m.perm)"
+                    v-if="checkMenu(m)"
                   >
                     <el-tooltip
                       placement="right"
@@ -337,7 +337,7 @@ import {
 } from '@/utils/util';
 import ChangeLang from '@/components/changeLang.vue';
 import ChangeOrg from '@/components/changeOrg.vue';
-import { DOC_FIRST_KEY } from '@/views/docCenter/constants';
+import { canAccessCampusRoles } from '@/utils/campusRole';
 
 export default {
   name: 'Layout',
@@ -384,23 +384,6 @@ export default {
             name: this.$t('menu.platformIntroduction'),
             path: '/platformIntro',
             img: require('@/assets/imgs/about_icon.svg'),
-          },
-          {
-            name: this.$t('menu.campusServiceManagement'),
-            path: '/adminDashboard',
-            img: require('@/assets/imgs/setting_icon.svg'),
-            perm: [PERMS.ADMIN_CENTER, PERMS.OBSERVATION_STATISTIC],
-          },
-          {
-            name: this.$t('menu.helpDoc'),
-            img: require('@/assets/imgs/helpDoc_icon.svg'),
-            icon: require('@/assets/imgs/link_icon.png'),
-            redirect: () => {
-              open(
-                location.origin +
-                  `${this.$basePath}/aibase/docCenter/pages/${DOC_FIRST_KEY}`,
-              );
-            },
           },
         ],
         [
@@ -466,9 +449,16 @@ export default {
       'commonInfo',
       'permission',
       'userAvatar',
+      'campusRole',
     ]),
     menuList() {
-      return rawMenuList;
+      return rawMenuList.map(group => ({
+        ...group,
+        children: group.children?.map(item => ({
+          ...item,
+          name: item.roleNames?.[this.campusRole.actualRole] || item.name,
+        })),
+      }));
     },
   },
   async created() {
@@ -497,6 +487,12 @@ export default {
     avatarSrc,
     ...mapActions('user', ['LoginOut', 'getPermissionInfo', 'getCommonInfo']),
     checkPerm,
+    checkMenu(item) {
+      return (
+        checkPerm(item.perm) &&
+        canAccessCampusRoles(item.roles, this.campusRole)
+      );
+    },
     logout() {
       localStorage.removeItem('access_cert');
       location.href = location.origin + this.$basePath + '/aibase/login';

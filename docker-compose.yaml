@@ -898,6 +898,16 @@ services:
   # ------ nginx & frontend ------
   
   nginx:
+    depends_on:
+      bff-service:
+        condition: service_healthy
+        restart: true
+      minio:
+        condition: service_healthy
+        restart: true
+      workflow:
+        condition: service_started
+        restart: true
     restart: always
     image: ${WANWU_FRONTEND_IMAGE}
     container_name: ${WANWU_NGINX_HOST}
@@ -906,6 +916,7 @@ services:
     ports:
       - ${WANWU_EXTERNAL_PORT}:8081
     volumes:
+      - ./configs/middleware/nginx/conf.d/aibase.conf:/etc/nginx/conf.d/aibase.conf:ro
       - ${WANWU_PROJECT_DIR}/nginx/log:/var/log/nginx
     healthcheck:
       test: ["CMD-SHELL", "timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/8081' || exit 1"]

@@ -3,6 +3,7 @@ import { store } from '@/store/index';
 import { fetchPermFirPath } from '@/utils/util';
 import { PERMS as menuPerms } from './constants';
 import { basePath } from '@/utils/config';
+import { canAccessCampusRoles } from '@/utils/campusRole';
 
 const white_list = [
   basePath + '/aibase',
@@ -45,6 +46,14 @@ router.beforeEach(async (to, from, next) => {
     if (to.path === '/') {
       const { path } = fetchPermFirPath();
       next({ path });
+    } else if (
+      !checkPerm(to.meta?.perm) ||
+      !canAccessCampusRoles(
+        to.meta?.campusRoles,
+        store.getters['user/campusRole'],
+      )
+    ) {
+      next({ path: '/smartAssistant', replace: true });
     } else {
       next();
     }

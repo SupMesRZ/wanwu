@@ -3,7 +3,7 @@
     <header class="page-hero">
       <div>
         <span class="eyebrow">CAMPUS CAPABILITY ECOSYSTEM</span>
-        <h1>校园业务能力中心</h1>
+        <h1>校园业务中心</h1>
         <p>集中展示河小智可理解、可调用、可编排的校园业务服务。</p>
       </div>
       <div class="hero-summary">
@@ -41,6 +41,22 @@
     </section>
 
     <section class="service-panel">
+      <div class="audience-tabs">
+        <button
+          v-for="audience in audiences"
+          :key="audience.key"
+          type="button"
+          :class="{ active: activeAudience === audience.key }"
+          @click="activeAudience = audience.key"
+        >
+          <span><i :class="audience.icon"></i></span>
+          <div>
+            <strong>{{ audience.name }}</strong>
+            <small>{{ audience.description }}</small>
+          </div>
+          <em>{{ audience.count }} 个系统</em>
+        </button>
+      </div>
       <div class="panel-heading">
         <div>
           <h2>已规划校园服务</h2>
@@ -218,10 +234,41 @@ export default {
   data() {
     return {
       activeFilter: 'all',
+      activeAudience: this.$route.query.audience || 'all',
       keyword: '',
       dialogVisible: false,
       dialogMode: 'interface',
       activeService: {},
+      audiences: [
+        {
+          key: 'all',
+          name: '全部服务',
+          description: '校园业务统一能力目录',
+          icon: 'el-icon-menu',
+          count: 8,
+        },
+        {
+          key: 'student',
+          name: '学生服务',
+          description: '教务、学工、图书与生活',
+          icon: 'el-icon-reading',
+          count: 4,
+        },
+        {
+          key: 'teacher',
+          name: '教师服务',
+          description: '教学与课程资源',
+          icon: 'el-icon-notebook-2',
+          count: 2,
+        },
+        {
+          key: 'academic_admin',
+          name: '管理服务',
+          description: '数据分析与综合管理',
+          icon: 'el-icon-data-analysis',
+          count: 2,
+        },
+      ],
       callChain: [
         {
           title: '自然语言需求',
@@ -247,6 +294,7 @@ export default {
       services: [
         {
           key: 'academic',
+          audience: 'student',
           name: '教务服务中心',
           provider: '河北大学教务系统',
           description: '连接课程、成绩、考试和培养方案等教务数据与业务。',
@@ -263,6 +311,7 @@ export default {
         },
         {
           key: 'student',
+          audience: 'student',
           name: '学工服务中心',
           provider: '河北大学学生工作系统',
           description: '连接请假、奖助、学籍和宿舍等学生事务服务。',
@@ -278,6 +327,7 @@ export default {
         },
         {
           key: 'library',
+          audience: 'student',
           name: '图书馆与知识服务',
           provider: '校园知识库 / 图书馆服务',
           description:
@@ -294,6 +344,7 @@ export default {
         },
         {
           key: 'logistics',
+          audience: 'student',
           name: '校园后勤服务',
           provider: '河北大学后勤服务系统',
           description: '连接报修、会议室、场地和生活服务等校园后勤能力。',
@@ -309,6 +360,7 @@ export default {
         },
         {
           key: 'teaching',
+          audience: 'teacher',
           name: '教师教学服务',
           provider: '河北大学教师教学系统',
           description: '面向教师提供授课安排、课程信息和教学分析服务。',
@@ -325,6 +377,7 @@ export default {
         },
         {
           key: 'notice',
+          audience: 'teacher',
           name: '校园通知服务',
           provider: '校内通知与政策信息',
           description: '聚合学校通知、规章制度和办事指南，提供统一检索入口。',
@@ -336,6 +389,43 @@ export default {
           experienceKey: 'library',
           ...buildExample('/knowledge/campus/notices', {
             answer: '由校园知识库检索生成',
+          }),
+        },
+        {
+          key: 'dataAnalysis',
+          audience: 'academic_admin',
+          name: '教学数据分析服务',
+          provider: '河北大学数据分析平台',
+          description: '聚合课程、成绩、教师与学生数据，支持跨业务统计分析。',
+          icon: 'el-icon-data-analysis',
+          color: 'violet',
+          connected: false,
+          connection: 'Data Analysis MCP（模拟）',
+          capabilities: [
+            '学院教学分析',
+            '课程运行分析',
+            '成绩分析',
+            '教师教学分析',
+          ],
+          experienceKey: 'collegeAnalysis',
+          ...buildExample('/mcp/campus/analytics/query', {
+            reportId: 'REPORT-DEMO-20260822',
+          }),
+        },
+        {
+          key: 'management',
+          audience: 'academic_admin',
+          name: '综合管理服务',
+          provider: '河北大学综合管理平台',
+          description: '连接统计报告、服务管理和任务协同能力，辅助教务决策。',
+          icon: 'el-icon-office-building',
+          color: 'blue',
+          connected: false,
+          connection: 'Management MCP + Workflow（模拟）',
+          capabilities: ['统计报告', '服务管理', '任务协同', '辅助决策'],
+          experienceKey: 'report',
+          ...buildExample('/mcp/campus/management/report', {
+            taskId: 'TASK-DEMO-0186',
           }),
         },
       ],
@@ -351,6 +441,9 @@ export default {
     filteredServices() {
       const keyword = this.keyword.toLowerCase();
       return this.services.filter(item => {
+        const matchesAudience =
+          this.activeAudience === 'all' ||
+          item.audience === this.activeAudience;
         const matchesStatus =
           this.activeFilter === 'all' ||
           (this.activeFilter === 'connected' && item.connected) ||
@@ -363,7 +456,11 @@ export default {
         ]
           .join(' ')
           .toLowerCase();
-        return matchesStatus && (!keyword || text.includes(keyword));
+        return (
+          matchesAudience &&
+          matchesStatus &&
+          (!keyword || text.includes(keyword))
+        );
       });
     },
     canManageMcp() {
@@ -397,7 +494,10 @@ export default {
     experience(service) {
       this.$router.push({
         path: '/smartAssistant',
-        query: { service: service.experienceKey },
+        query: {
+          service: service.experienceKey,
+          previewRole: service.audience,
+        },
       });
     },
     showInterface(service) {
@@ -547,6 +647,71 @@ export default {
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 7px 24px rgba(37, 69, 112, 0.05);
+}
+
+.audience-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+
+  button {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    padding: 12px;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    border: 1px solid #e3e9f1;
+    border-radius: 10px;
+    background: #f9fbfd;
+    transition: 0.2s ease;
+
+    &:hover,
+    &.active {
+      color: #1559c5;
+      border-color: #9fc3ed;
+      background: #f1f7ff;
+    }
+
+    > span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      color: #1768c9;
+      border-radius: 9px;
+      background: #e8f2ff;
+    }
+
+    strong,
+    small {
+      display: block;
+    }
+
+    strong {
+      margin-bottom: 3px;
+      font-size: 12px;
+    }
+
+    small {
+      overflow: hidden;
+      color: #8b97a7;
+      font-size: 9px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    em {
+      color: #8493a7;
+      font-size: 9px;
+      font-style: normal;
+      white-space: nowrap;
+    }
+  }
 }
 
 .panel-heading {
@@ -831,6 +996,9 @@ pre {
 }
 
 @media (max-width: 1120px) {
+  .audience-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .service-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -867,7 +1035,8 @@ pre {
     flex-wrap: wrap;
   }
   .service-grid,
-  .call-chain {
+  .call-chain,
+  .audience-tabs {
     grid-template-columns: 1fr;
   }
   .panel-tools .el-input {

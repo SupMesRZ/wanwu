@@ -89,15 +89,85 @@ const constantRoutes = [
           require(['@/views/smartAssistant/index.vue'], resolve),
       },
       {
+        path: '/campus/student/courses',
+        component: resolve =>
+          require(['@/views/campusPortal/index.vue'], resolve),
+        meta: {
+          campusPage: 'studentCourses',
+          campusRoles: ['student'],
+        },
+      },
+      {
+        path: '/campus/student/affairs',
+        component: resolve =>
+          require(['@/views/campusPortal/index.vue'], resolve),
+        meta: {
+          campusPage: 'studentAffairs',
+          campusRoles: ['student'],
+        },
+      },
+      {
+        path: '/campus/student/analysis',
+        component: resolve =>
+          require(['@/views/campusPortal/index.vue'], resolve),
+        meta: {
+          campusPage: 'studentAnalysis',
+          campusRoles: ['student'],
+        },
+      },
+      {
+        path: '/campus/teacher/teaching',
+        component: resolve =>
+          require(['@/views/campusPortal/index.vue'], resolve),
+        meta: {
+          campusPage: 'teacherTeaching',
+          campusRoles: ['teacher'],
+        },
+      },
+      {
+        path: '/campus/teacher/resources',
+        component: resolve =>
+          require(['@/views/campusPortal/index.vue'], resolve),
+        meta: {
+          campusPage: 'teacherResources',
+          campusRoles: ['teacher'],
+        },
+      },
+      {
+        path: '/campus/teacher/analysis',
+        component: resolve =>
+          require(['@/views/campusPortal/index.vue'], resolve),
+        meta: {
+          campusPage: 'teacherAnalysis',
+          campusRoles: ['teacher'],
+        },
+      },
+      {
         path: '/businessCenter',
         component: resolve =>
           require(['@/views/businessCenter/index.vue'], resolve),
+        meta: { campusRoles: ['academic_admin'] },
+      },
+      {
+        path: '/agentCenter',
+        component: resolve =>
+          require(['@/views/agentCenter/index.vue'], resolve),
+        meta: { perm: [PERMS.ADMIN_CENTER, PERMS.AGENT] },
+      },
+      {
+        path: '/campusWorkflow',
+        component: resolve =>
+          require(['@/views/campusWorkflow/index.vue'], resolve),
+        meta: { perm: [PERMS.ADMIN_CENTER, PERMS.WORKFLOW] },
       },
       {
         path: '/adminDashboard',
         component: resolve =>
           require(['@/views/adminDashboard/index.vue'], resolve),
-        meta: { perm: [PERMS.ADMIN_CENTER, PERMS.OBSERVATION_STATISTIC] },
+        meta: {
+          perm: [PERMS.ADMIN_CENTER, PERMS.OBSERVATION_STATISTIC],
+          campusRoles: ['academic_admin'],
+        },
       },
       {
         path: '/docCenter/pages/:id(.*)*',

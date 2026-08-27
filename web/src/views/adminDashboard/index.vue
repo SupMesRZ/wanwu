@@ -1,19 +1,20 @@
 <template>
   <div class="dashboard-page">
     <header class="dashboard-header">
-      <div>
+      <div class="header-copy">
         <div class="title-line">
           <h1>智慧校园管理中心</h1>
           <el-tag size="mini" type="warning" effect="plain">演示数据</el-tag>
         </div>
-        <p>面向学校管理人员展示AI校园服务运行情况与辅助决策信息。</p>
+        <p>面向学校管理人员展示 AI 校园服务运行情况与辅助决策信息。</p>
       </div>
       <div class="header-actions">
-        <span>
-          <i class="el-icon-time"></i>
-          更新于 {{ updatedAt }}
+        <span class="updated-at">
+          <i></i>
+          数据更新于 {{ updatedAt }}
         </span>
         <el-button
+          type="primary"
           size="small"
           icon="el-icon-refresh"
           @click="refreshDashboard"
@@ -31,29 +32,92 @@
       :closable="false"
     />
 
-    <section class="metric-grid">
-      <article
-        v-for="metric in metrics"
-        :key="metric.label"
-        class="metric-card"
-      >
-        <span class="metric-icon" :class="metric.color">
-          <i :class="metric.icon"></i>
-        </span>
-        <div class="metric-main">
-          <span>{{ metric.label }}</span>
-          <strong>
-            {{ metric.value }}
-            <small>{{ metric.unit }}</small>
-          </strong>
-          <p :class="metric.trend >= 0 ? 'up' : 'down'">
-            <i
-              :class="metric.trend >= 0 ? 'el-icon-top' : 'el-icon-bottom'"
-            ></i>
-            {{ Math.abs(metric.trend) }}% 较昨日
-          </p>
+    <section class="overview-hero">
+      <div class="hero-summary">
+        <div class="hero-section-title">
+          <span class="hero-title-icon"><i class="el-icon-data-line"></i></span>
+          <div>
+            <h2>今日运行概览</h2>
+            <p>集中查看校园智能服务核心运行指标</p>
+          </div>
         </div>
-      </article>
+
+        <div class="hero-metric-grid">
+          <article
+            v-for="metric in metrics"
+            :key="metric.label"
+            class="hero-metric"
+          >
+            <span class="metric-icon" :class="metric.color">
+              <i :class="metric.icon"></i>
+            </span>
+            <div class="metric-main">
+              <span>{{ metric.label }}</span>
+              <div class="metric-value-row">
+                <strong>
+                  {{ metric.value }}
+                  <small>{{ metric.unit }}</small>
+                </strong>
+                <p :class="metric.trend >= 0 ? 'up' : 'down'">
+                  <i
+                    :class="
+                      metric.trend >= 0 ? 'el-icon-top' : 'el-icon-bottom'
+                    "
+                  ></i>
+                  {{ Math.abs(metric.trend) }}%
+                </p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="hero-trend">
+        <div class="hero-trend-title">
+          <div>
+            <h3>近7日服务趋势</h3>
+            <p>校园 AI 服务调用量</p>
+          </div>
+          <span>
+            <i></i>
+            成功率 98.5%
+          </span>
+        </div>
+        <div class="line-chart">
+          <svg viewBox="0 0 520 140" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#79a7ff" stop-opacity="0.38" />
+                <stop offset="100%" stop-color="#79a7ff" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <line
+              v-for="line in 3"
+              :key="line"
+              x1="20"
+              x2="500"
+              :y1="line * 35"
+              :y2="line * 35"
+              class="chart-grid-line"
+            />
+            <polygon :points="trendAreaPoints" fill="url(#trendArea)" />
+            <polyline :points="trendPoints" class="trend-line" />
+            <circle
+              v-for="(item, index) in weeklyTrend"
+              :key="`point-${item.day}`"
+              :cx="trendX(index)"
+              :cy="trendY(item.percent)"
+              r="4"
+              class="trend-point"
+            />
+          </svg>
+          <div class="chart-labels">
+            <span v-for="item in weeklyTrend" :key="`label-${item.day}`">
+              {{ item.day }}
+            </span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="dashboard-grid dashboard-grid--top">
@@ -79,61 +143,6 @@
               <span :style="{ width: item.percent + '%' }"></span>
             </div>
             <strong>{{ item.value }}次</strong>
-          </div>
-        </div>
-      </article>
-
-      <article class="panel trend-panel">
-        <div class="panel-title">
-          <div>
-            <h2>近7日服务趋势</h2>
-            <p>AI服务调用量与成功率</p>
-          </div>
-          <span class="success-label">
-            <i></i>
-            成功率 98.5%
-          </span>
-        </div>
-        <div class="trend-chart">
-          <div v-for="item in weeklyTrend" :key="item.day" class="trend-column">
-            <div class="bar-wrap">
-              <span class="bar-value">{{ item.value }}</span>
-              <div class="bar" :style="{ height: item.percent + '%' }"></div>
-            </div>
-            <span>{{ item.day }}</span>
-          </div>
-        </div>
-      </article>
-    </section>
-
-    <section class="dashboard-grid dashboard-grid--middle">
-      <article class="panel user-panel">
-        <div class="panel-title">
-          <div>
-            <h2>用户服务分析</h2>
-            <p>不同校园角色的使用情况</p>
-          </div>
-        </div>
-        <div class="user-segments">
-          <div
-            v-for="segment in userSegments"
-            :key="segment.name"
-            class="user-segment"
-          >
-            <span class="segment-icon" :class="segment.color">
-              <i :class="segment.icon"></i>
-            </span>
-            <div class="segment-summary">
-              <span>{{ segment.name }}</span>
-              <strong>
-                {{ segment.visits }}
-                <small>次访问</small>
-              </strong>
-            </div>
-            <div class="segment-topics">
-              <span>热门需求</span>
-              <p v-for="topic in segment.topics" :key="topic">{{ topic }}</p>
-            </div>
           </div>
         </div>
       </article>
@@ -169,10 +178,56 @@
       </article>
     </section>
 
+    <section class="panel user-panel">
+      <div class="panel-title">
+        <div>
+          <h2>用户服务分析</h2>
+          <p>不同校园角色的使用情况与热门需求</p>
+        </div>
+        <el-tag size="mini" effect="plain">今日数据</el-tag>
+      </div>
+      <div class="user-segments">
+        <div
+          v-for="segment in userSegments"
+          :key="segment.name"
+          class="user-segment"
+        >
+          <div class="segment-head">
+            <span class="segment-icon" :class="segment.color">
+              <i :class="segment.icon"></i>
+            </span>
+            <div class="segment-summary">
+              <span>{{ segment.name }}</span>
+              <strong>
+                {{ segment.visits }}
+                <small>次访问</small>
+              </strong>
+            </div>
+          </div>
+          <div class="segment-kpis">
+            <div v-for="metric in segment.metrics" :key="metric.label">
+              <span>{{ metric.label }}</span>
+              <strong>{{ metric.value }}</strong>
+            </div>
+          </div>
+          <div class="segment-topics">
+            <span>热门需求</span>
+            <div class="topic-list">
+              <em v-for="topic in segment.topics" :key="topic">
+                {{ topic }}
+              </em>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="decision-panel">
       <div class="decision-side">
-        <span class="ai-mark"><i class="el-icon-cpu"></i></span>
-        <span class="eyebrow">AI ASSISTED DECISION</span>
+        <span class="ai-mark">
+          <img :src="schoolIconSrc" alt="河北大学校徽" />
+        </span>
+        <span class="eyebrow">智能辅助分析</span>
         <h2>河小智辅助决策</h2>
         <p>结合近期校园服务数据，辅助发现师生关注点和服务优化方向。</p>
         <div class="suggested-questions">
@@ -261,7 +316,10 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import { checkPerm, PERMS } from '@/router/permission';
+import { avatarSrc } from '@/utils/util';
+import { basePath } from '@/utils/config';
 
 export default {
   name: 'AdminDashboard',
@@ -273,24 +331,16 @@ export default {
       analysisResult: null,
       metrics: [
         {
-          label: '今日AI服务次数',
-          value: '3,568',
-          unit: '',
-          trend: 12.6,
-          icon: 'el-icon-chat-dot-round',
+          label: '平台服务用户',
+          value: '18,624',
+          unit: '人',
+          trend: 6.2,
+          icon: 'el-icon-user',
           color: 'blue',
         },
         {
-          label: '服务成功率',
-          value: '98.5',
-          unit: '%',
-          trend: 0.8,
-          icon: 'el-icon-circle-check',
-          color: 'green',
-        },
-        {
-          label: '当前运行智能体',
-          value: '12',
+          label: '角色智能体',
+          value: '3',
           unit: '个',
           trend: 9.1,
           icon: 'el-icon-cpu',
@@ -303,6 +353,22 @@ export default {
           trend: 14.3,
           icon: 'el-icon-connection',
           color: 'orange',
+        },
+        {
+          label: '今日 AI 调用',
+          value: '3,568',
+          unit: '次',
+          trend: 12.6,
+          icon: 'el-icon-chat-dot-round',
+          color: 'green',
+        },
+        {
+          label: '工作流执行',
+          value: '1,286',
+          unit: '次',
+          trend: 18.4,
+          icon: 'el-icon-share',
+          color: 'blue',
         },
       ],
       rankings: [
@@ -328,6 +394,10 @@ export default {
           visits: '2,846',
           icon: 'el-icon-school',
           color: 'blue',
+          metrics: [
+            { label: '服务调用次数', value: '2,846' },
+            { label: '流程办理次数', value: '438' },
+          ],
           topics: ['考试与成绩查询', '课程安排', '请假办理'],
         },
         {
@@ -335,6 +405,10 @@ export default {
           visits: '516',
           icon: 'el-icon-user',
           color: 'green',
+          metrics: [
+            { label: 'AI 备课次数', value: '126' },
+            { label: '教学资源生成', value: '84' },
+          ],
           topics: ['教学安排', '课程资料', '学生反馈'],
         },
         {
@@ -342,6 +416,10 @@ export default {
           visits: '206',
           icon: 'el-icon-office-building',
           color: 'violet',
+          metrics: [
+            { label: '数据分析次数', value: '38' },
+            { label: '管理任务完成率', value: '92%' },
+          ],
           topics: ['服务统计', '热点分析', '运行状态'],
         },
       ],
@@ -380,11 +458,29 @@ export default {
       suggestedQuestions: [
         '分析近期学生关注的问题',
         '哪些服务需要优先优化？',
-        '总结本周AI服务运行情况',
+        '总结本周 AI 服务运行情况',
       ],
     };
   },
   computed: {
+    ...mapGetters('user', ['commonInfo']),
+    schoolIconSrc() {
+      const schoolIconPath =
+        this.commonInfo?.data?.tab?.logo?.path ||
+        this.commonInfo?.data?.home?.logo?.path ||
+        '';
+      return avatarSrc(schoolIconPath, `${basePath}/aibase/favicon.ico`);
+    },
+    trendPoints() {
+      return this.weeklyTrend
+        .map(
+          (item, index) => `${this.trendX(index)},${this.trendY(item.percent)}`,
+        )
+        .join(' ');
+    },
+    trendAreaPoints() {
+      return `20,130 ${this.trendPoints} 500,130`;
+    },
     canViewObservation() {
       return checkPerm(PERMS.OBSERVATION_STATISTIC);
     },
@@ -396,6 +492,12 @@ export default {
     },
   },
   methods: {
+    trendX(index) {
+      return 20 + index * 80;
+    },
+    trendY(percent) {
+      return 130 - percent;
+    },
     formatTime(date) {
       const pad = value => String(value).padStart(2, '0');
       return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
@@ -986,6 +1088,783 @@ export default {
   }
   .analysis-input {
     flex-direction: column;
+  }
+}
+
+/* 参考运营台的信息层级与栅格规则，保留智慧校园现有业务内容。 */
+.dashboard-page {
+  box-sizing: border-box;
+  padding: 20px 24px 28px;
+  color: #172b4d;
+  background: #f5f7fb;
+  font-family: 'PingFang SC', 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+}
+
+.dashboard-header,
+.demo-notice,
+.overview-hero,
+.dashboard-grid,
+.user-panel,
+.decision-panel,
+.management-links {
+  width: 100%;
+  max-width: 1360px;
+  box-sizing: border-box;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.dashboard-header {
+  min-height: 58px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+
+  .header-copy {
+    min-width: 0;
+  }
+
+  h1 {
+    color: #142544;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 32px;
+    letter-spacing: -0.4px;
+  }
+
+  p {
+    margin-top: 4px;
+    color: #7d889c;
+    font-size: 12px;
+    line-height: 20px;
+  }
+}
+
+.header-actions {
+  padding-top: 2px;
+  gap: 14px;
+
+  .updated-at {
+    display: inline-flex;
+    align-items: center;
+    color: #8792a6;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .updated-at > i {
+    width: 7px;
+    height: 7px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background: #25a675;
+    box-shadow: 0 0 0 4px rgba(37, 166, 117, 0.1);
+  }
+
+  ::v-deep .el-button {
+    min-width: 92px;
+    border-radius: 6px;
+  }
+}
+
+.demo-notice {
+  margin-bottom: 12px;
+  border: 1px solid #f1dfb9;
+  border-radius: 6px;
+
+  ::v-deep .el-alert__title {
+    font-size: 12px;
+  }
+}
+
+.overview-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(540px, 1.3fr) minmax(390px, 0.9fr);
+  min-height: 232px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  color: #fff;
+  border: 1px solid rgba(118, 163, 235, 0.16);
+  border-radius: 9px;
+  background:
+    radial-gradient(
+      circle at 76% 12%,
+      rgba(57, 119, 221, 0.26),
+      transparent 32%
+    ),
+    linear-gradient(118deg, #0b2852 0%, #103568 54%, #0a244a 100%);
+  box-shadow: 0 8px 22px rgba(18, 51, 97, 0.13);
+
+  &::after {
+    position: absolute;
+    top: -110px;
+    right: -80px;
+    width: 310px;
+    height: 310px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    content: '';
+  }
+}
+
+.hero-summary,
+.hero-trend {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  padding: 20px 22px;
+}
+
+.hero-summary {
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hero-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+
+  h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 23px;
+  }
+
+  p {
+    margin: 1px 0 0;
+    color: rgba(222, 234, 255, 0.62);
+    font-size: 12px;
+  }
+}
+
+.hero-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: #9fc0ff;
+  border: 1px solid rgba(159, 192, 255, 0.38);
+  border-radius: 50%;
+  background: rgba(84, 137, 224, 0.13);
+}
+
+.hero-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hero-metric {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 11px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.055);
+
+  .metric-icon {
+    width: 38px;
+    height: 38px;
+    margin-right: 11px;
+    color: #a9c7ff;
+    border: 1px solid rgba(141, 181, 255, 0.24);
+    border-radius: 50%;
+    background: rgba(71, 126, 219, 0.17);
+    font-size: 16px;
+
+    &.green {
+      color: #8fe0c2;
+      border-color: rgba(95, 203, 162, 0.2);
+      background: rgba(41, 158, 117, 0.13);
+    }
+
+    &.violet {
+      color: #c1b2ff;
+      border-color: rgba(169, 145, 255, 0.22);
+      background: rgba(120, 91, 214, 0.14);
+    }
+
+    &.orange {
+      color: #ffc381;
+      border-color: rgba(255, 174, 87, 0.22);
+      background: rgba(207, 119, 31, 0.14);
+    }
+  }
+
+  .metric-main > span {
+    color: rgba(222, 234, 255, 0.7);
+    font-size: 12px;
+  }
+
+  .metric-value-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+  }
+
+  strong {
+    margin: 2px 0 0;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 30px;
+  }
+
+  strong small {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  p {
+    margin: 0 0 3px;
+    font-size: 12px;
+  }
+
+  .up {
+    color: #75d9b1;
+  }
+
+  .down {
+    color: #ff9b9b;
+  }
+}
+
+.hero-trend {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-trend-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+
+  h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 22px;
+  }
+
+  p {
+    margin: 1px 0 0;
+    color: rgba(222, 234, 255, 0.6);
+    font-size: 12px;
+  }
+
+  > span {
+    display: inline-flex;
+    align-items: center;
+    color: rgba(232, 241, 255, 0.78);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  > span i {
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: #73d7b0;
+    box-shadow: 0 0 0 3px rgba(115, 215, 176, 0.12);
+  }
+}
+
+.line-chart {
+  min-height: 0;
+  margin-top: 10px;
+  flex: 1;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 135px;
+    overflow: visible;
+  }
+
+  .chart-grid-line {
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 1;
+    stroke-dasharray: 4 5;
+  }
+
+  .trend-line {
+    fill: none;
+    stroke: #83adff;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .trend-point {
+    fill: #dbe8ff;
+    stroke: #4f87ec;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+}
+
+.chart-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-top: -2px;
+  color: rgba(222, 234, 255, 0.56);
+  font-size: 12px;
+  text-align: center;
+}
+
+.dashboard-grid {
+  margin-bottom: 12px;
+  gap: 12px;
+
+  &--top {
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  }
+}
+
+.panel {
+  padding: 18px 20px;
+  border: 1px solid #e3e8f0;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(29, 59, 103, 0.045);
+}
+
+.panel-title {
+  margin-bottom: 14px;
+
+  > div:first-child {
+    position: relative;
+    padding-left: 10px;
+  }
+
+  > div:first-child::before {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 0;
+    width: 3px;
+    border-radius: 2px;
+    background: #5983ff;
+    content: '';
+  }
+
+  h2 {
+    margin-bottom: 3px;
+    color: #243754;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  p {
+    color: #97a0af;
+    font-size: 12px;
+  }
+}
+
+.ranking-list {
+  gap: 0;
+}
+
+.ranking-item {
+  min-height: 42px;
+  grid-template-columns: 26px 92px minmax(100px, 1fr) 62px;
+  border-bottom: 1px solid #eef1f5;
+  font-size: 12px;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  strong {
+    color: #3f526f;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.rank {
+  width: 21px;
+  height: 21px;
+  border-radius: 5px;
+
+  &.top {
+    color: #3569db;
+    background: #edf3ff;
+  }
+}
+
+.rank-bar {
+  height: 6px;
+  background: #eef2f7;
+}
+
+.rank-bar span {
+  background: linear-gradient(90deg, #3569db, #77a4ff);
+}
+
+.normal-status {
+  color: #2c7e62;
+  font-size: 12px;
+}
+
+.system-list > div {
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 6px 0;
+  grid-template-columns: 10px minmax(0, 1fr) 50px 54px;
+
+  strong {
+    color: #344863;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  small {
+    color: #9aa3b1;
+    font-size: 12px;
+  }
+}
+
+.user-panel {
+  margin-bottom: 12px;
+}
+
+.user-segments {
+  gap: 10px;
+}
+
+.user-segment {
+  display: flex;
+  min-width: 0;
+  padding: 13px 14px;
+  flex-direction: column;
+  border: 1px solid #e7ebf2;
+  border-radius: 7px;
+  background: #fbfcfe;
+}
+
+.segment-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.segment-head > .segment-icon {
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.segment-summary {
+  min-width: 0;
+
+  span {
+    color: #657289;
+    font-size: 12px;
+  }
+
+  strong {
+    margin: 2px 0 0;
+    color: #263b59;
+    font-size: 20px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  small {
+    font-size: 12px;
+    font-weight: 400;
+  }
+}
+
+.segment-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+
+  > div {
+    min-width: 0;
+    padding: 8px 9px;
+    border-radius: 5px;
+    background: #f1f5fa;
+  }
+
+  span,
+  strong {
+    display: block;
+  }
+
+  span {
+    overflow: hidden;
+    color: #8995a6;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    margin-top: 3px;
+    color: #284565;
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.segment-topics {
+  min-width: 0;
+  margin-top: 11px;
+  padding: 9px 0 0;
+  border-top: 1px solid #e5e9ef;
+  border-left: 0;
+
+  > span {
+    color: #939dac;
+    font-size: 12px;
+  }
+}
+
+.topic-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+
+  em {
+    max-width: 100%;
+    padding: 3px 6px;
+    overflow: hidden;
+    color: #536680;
+    border-radius: 4px;
+    background: #f0f3f8;
+    font-size: 12px;
+    font-style: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.decision-panel {
+  grid-template-columns: 320px minmax(0, 1fr);
+  margin-bottom: 12px;
+  overflow: hidden;
+  border: 1px solid #dedff4;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(73, 67, 143, 0.055);
+}
+
+.decision-side {
+  padding: 22px;
+  color: #343261;
+  border-right: 1px solid #e1e1f4;
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(117, 93, 216, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(145deg, #f7f5ff, #efedff);
+
+  .eyebrow {
+    color: #8b82bb;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  h2 {
+    margin: 5px 0 7px;
+    color: #39346c;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  > p {
+    margin-bottom: 12px;
+    color: #746f95;
+    font-size: 12px;
+    line-height: 1.65;
+  }
+}
+
+.ai-mark {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 11px;
+  color: #6954c7;
+  border: 1px solid rgba(105, 84, 199, 0.14);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+
+  img {
+    display: block;
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+  }
+}
+
+.suggested-questions {
+  gap: 5px;
+}
+
+.suggested-questions button {
+  padding: 7px 9px;
+  color: #5f5884;
+  border-color: rgba(105, 84, 199, 0.14);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  line-height: 18px;
+
+  &:hover {
+    color: #5140a5;
+    border-color: rgba(105, 84, 199, 0.3);
+    background: #fff;
+  }
+}
+
+.decision-workspace {
+  min-height: 285px;
+  padding: 21px 22px;
+}
+
+.analysis-input {
+  ::v-deep .el-input__inner,
+  ::v-deep .el-button {
+    border-radius: 6px;
+  }
+}
+
+.analysis-empty {
+  height: 192px;
+}
+
+.result-head,
+.insight-item > span,
+.insight-item strong,
+.insight-item p,
+.insight-item small,
+.analysis-empty p,
+.latency {
+  font-size: 12px;
+}
+
+.result-head {
+  font-weight: 600;
+}
+
+.management-links {
+  margin-bottom: 0;
+  padding: 16px 19px;
+  border: 1px solid #e3e8f0;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(29, 59, 103, 0.04);
+
+  h2 {
+    color: #2b3e5a;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  p {
+    font-size: 12px;
+  }
+
+  ::v-deep .el-button {
+    border-radius: 6px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .overview-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-summary {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .line-chart svg {
+    height: 125px;
+  }
+
+  .segment-topics {
+    margin-top: 10px;
+    padding: 9px 0 0;
+    border-top: 1px solid #e5e9ef;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .dashboard-page {
+    padding: 16px;
+  }
+
+  .dashboard-grid--top,
+  .decision-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .decision-side {
+    border-right: 0;
+    border-bottom: 1px solid #e1e1f4;
+  }
+
+  .user-segments {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .segment-topics {
+    margin-top: 10px;
+    padding: 9px 0 0;
+    border-top: 1px solid #e5e9ef;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard-header,
+  .header-actions,
+  .management-links {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero-summary,
+  .hero-trend {
+    padding: 17px;
+  }
+
+  .hero-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .segment-topics {
+    margin-top: 9px;
+    padding: 9px 0 0;
+    border-top: 1px solid #e5e9ef;
+    border-left: 0;
   }
 }
 </style>

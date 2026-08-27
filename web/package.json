@@ -4,6 +4,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "check:campus-role": "node scripts/check-campus-role.mjs",
     "lint:prettier": "prettier --check .",
     "lint:fix": "prettier --write --list-different .",
     "prepare": "cd .. && husky install web/.husky",

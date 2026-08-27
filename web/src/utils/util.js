@@ -6,6 +6,7 @@ import { Message } from 'element-ui';
 import { isSafeImageUrl, escapeHtml as sanitizeEscapeHtml } from './sanitize';
 import { basePath } from '@/utils/config';
 import { store } from '@/store';
+import { canAccessCampusRoles } from './campusRole';
 
 export function guid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(
@@ -28,7 +29,10 @@ export const fetchPermFirPath = (list = menuList) => {
   for (let i in list) {
     const item = list[i];
 
-    if (checkPerm(item.perm)) {
+    if (
+      checkPerm(item.perm) &&
+      canAccessCampusRoles(item.roles, store.getters['user/campusRole'])
+    ) {
       if (item.children?.length) {
         path = fetchPermFirPath(item.children).path;
         break;

@@ -109,7 +109,9 @@
               </button>
             </div>
 
-            <div class="header-title">{{ currentTitle }}</div>
+            <div class="header-title">
+              <slot name="header-title">{{ currentTitle }}</slot>
+            </div>
           </div>
 
           <div v-if="isSkillType" class="header-right">
