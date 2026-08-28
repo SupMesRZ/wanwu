@@ -40,6 +40,7 @@ type Config struct {
 	SkillCreator      SkillCreatorConfig         `json:"skill-creator" mapstructure:"skill-creator"`
 	SkillCreatorPath  SkillCreatorPathConfig     `json:"skill-creator-path" mapstructure:"skill-creator-path"`
 	RecommendModels   RecommendModelConfig       `json:"recommend_models" mapstructure:"recommend_models"`
+	CampusStudent     CampusStudentConfig        `json:"campus-student" mapstructure:"campus-student"`
 	// middleware
 	Minio minio.Config `json:"minio" mapstructure:"minio"`
 	Redis redis.Config `json:"redis" mapstructure:"redis"`
@@ -59,6 +60,10 @@ type Config struct {
 	Workflow            WorkflowServiceConfig `json:"workflow" mapstructure:"workflow"`
 	WgaSandbox          WgaSandboxConfig      `json:"wga-sandbox" mapstructure:"wga-sandbox"`
 	Ontology            OntologyServiceConfig `json:"ontology" mapstructure:"ontology"`
+}
+
+type CampusStudentConfig struct {
+	AssistantID string `json:"assistant_id" mapstructure:"assistant_id"`
 }
 
 type ServerConfig struct {

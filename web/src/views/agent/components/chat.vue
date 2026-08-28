@@ -4,11 +4,13 @@
       <div class="smart-center" style="padding: 0">
         <!--开场白设置-->
         <div v-show="echo" class="session rl echo">
-          <streamGreetingField
-            :editForm="editForm"
-            sessionItemWidth="100%"
-            @setProloguePrompt="setProloguePrompt"
-          />
+          <slot name="welcome">
+            <streamGreetingField
+              :editForm="editForm"
+              sessionItemWidth="100%"
+              @setProloguePrompt="setProloguePrompt"
+            />
+          </slot>
         </div>
         <!--对话-->
         <div v-show="!echo" class="center-session">
@@ -156,6 +158,10 @@ export default {
     assistantId: {
       type: String,
       default: '',
+    },
+    campusStudentAdapter: {
+      type: Object,
+      default: null,
     },
     maxImageSize: {
       type: [Number, String],
@@ -361,7 +367,11 @@ export default {
       //如果是新会话，先创建
       if (!this.conversationId && this.chatType === 'chat') {
         let res = null;
-        if (this.type === 'agentChat') {
+        if (this.type === 'campusStudent') {
+          res = await this.campusStudentAdapter.createConversation(
+            this.inputVal,
+          );
+        } else if (this.type === 'agentChat') {
           res = await createConversation({
             prompt: this.inputVal,
             assistantId: this.editForm.assistantId,
@@ -422,6 +432,11 @@ export default {
       return true;
     },
     setParams() {
+      if (this.type === 'campusStudent') {
+        this.campusStudentAdapter.stream(this.inputVal, this.conversationId);
+        this.echo = false;
+        return;
+      }
       const fileInfo = JSON.parse(
         JSON.stringify(this.$refs['editable'].getFileIdList()),
       );

@@ -52,6 +52,14 @@
                 <label>
                   {{ $t('tool.server.count', { count: item.toolNum }) }}
                 </label>
+                <label v-if="item.kind === 'campus'">
+                  校园业务 MCP ·
+                  {{
+                    item.authMode === 'campus_execution_context'
+                      ? '用户上下文认证'
+                      : ''
+                  }}
+                </label>
               </span>
             </div>
             <el-dropdown placement="bottom">
@@ -62,7 +70,10 @@
                 <el-dropdown-item @click.native="handleAddServer(item)">
                   {{ $t('common.button.edit') }}
                 </el-dropdown-item>
-                <el-dropdown-item @click.native="handleDelete(item)">
+                <el-dropdown-item
+                  v-if="item.kind !== 'campus'"
+                  @click.native="handleDelete(item)"
+                >
                   {{ $t('common.button.delete') }}
                 </el-dropdown-item>
               </el-dropdown-menu>

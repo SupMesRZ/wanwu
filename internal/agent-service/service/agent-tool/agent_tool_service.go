@@ -25,7 +25,7 @@ func BuildAgentToolsConfig(ctx *gin.Context, req *request.AgentChatParams, chatI
 	//mcp 工具
 	var toolList []tool.BaseTool
 	//mcp 不用替换工具名
-	mcpToolList, mcpToolIDNameMap, _ := GetToolsFromMCPServers(ctx, req.ToolParams.McpToolList)
+	mcpToolList, mcpToolIDNameMap, _ := GetToolsFromMCPServers(ctx.Request.Context(), req.ToolParams.McpToolList)
 	if len(mcpToolList) > 0 {
 		toolList = append(toolList, mcpToolList...)
 	}

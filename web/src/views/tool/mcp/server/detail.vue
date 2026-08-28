@@ -110,12 +110,14 @@
             </div>
             <div>
               <el-button
+                v-if="detail.kind !== 'campus'"
                 size="mini"
                 @click="$refs.toolDialog.showDialog(detail)"
               >
                 {{ $t('tool.server.bind.action') }}
               </el-button>
               <el-button
+                v-if="detail.kind !== 'campus'"
                 size="mini"
                 @click="$refs.addDialog.showToolDialog(mcpServerId)"
               >
@@ -126,11 +128,17 @@
               <el-table-column
                 :label="$t('tool.server.bind.methodName')"
                 prop="methodName"
-                width="100"
+                width="250"
               >
                 <template #default="scope">
                   <el-input
-                    :readonly="!scope.row.isEditing"
+                    v-if="detail.kind === 'campus'"
+                    :value="displayToolName(scope.row)"
+                    readonly
+                  />
+                  <el-input
+                    v-else
+                    :readonly="!scope.row.isEditing || detail.kind === 'campus'"
                     v-model="scope.row.methodName"
                     :placeholder="
                       $t('common.input.placeholder') +
@@ -142,7 +150,7 @@
               <el-table-column
                 :label="$t('tool.server.bind.name')"
                 prop="name"
-                width="100"
+                width="220"
               />
               <el-table-column :label="$t('tool.server.bind.type')" width="100">
                 <template #default="scope">
@@ -154,7 +162,13 @@
               <el-table-column :label="$t('tool.server.bind.desc')" prop="desc">
                 <template #default="scope">
                   <el-input
-                    :readonly="!scope.row.isEditing"
+                    v-if="detail.kind === 'campus'"
+                    :value="displayToolDesc(scope.row)"
+                    readonly
+                  />
+                  <el-input
+                    v-else
+                    :readonly="!scope.row.isEditing || detail.kind === 'campus'"
                     v-model="scope.row.desc"
                     :placeholder="
                       $t('common.input.placeholder') +
@@ -169,6 +183,7 @@
               >
                 <template #default="scope">
                   <el-button
+                    v-if="detail.kind !== 'campus'"
                     v-if="scope.row.isEditing"
                     size="mini"
                     type="primary"
@@ -183,7 +198,11 @@
                   >
                     {{ $t('common.button.edit') }}
                   </el-button>
-                  <el-button size="mini" @click="handleDeleteTool(scope.row)">
+                  <el-button
+                    v-if="detail.kind !== 'campus'"
+                    size="mini"
+                    @click="handleDeleteTool(scope.row)"
+                  >
                     {{ $t('common.button.delete') }}
                   </el-button>
                 </template>
@@ -192,7 +211,7 @@
           </div>
         </div>
 
-        <div class="tool bg-border">
+        <div v-if="detail.kind !== 'campus'" class="tool bg-border">
           <div class="tool-item">
             <p class="title">{{ $t('tool.server.detail.apiKey') }}</p>
             <el-button
@@ -247,6 +266,28 @@ import addDialog from '@/views/tool/tool/custom/addDialog.vue';
 import toolDialog from './toolDialog.vue';
 
 const APPTYPE_MCPSERVER = 'mcpserver';
+const CAMPUS_TOOL_LABELS = {
+  query_my_schedule: {
+    name: '查询我的课程',
+    desc: '查询当前登录学生本人的今日、指定日期或本周课程安排',
+  },
+  query_my_exam_schedule: {
+    name: '查询我的考试',
+    desc: '查询当前登录学生本人的考试安排',
+  },
+  query_my_score: {
+    name: '查询我的成绩',
+    desc: '查询当前登录学生本人的课程成绩',
+  },
+  query_my_leave_records: {
+    name: '查询我的请假记录',
+    desc: '查询当前登录学生本人的请假记录和审批状态',
+  },
+  query_my_learning_summary: {
+    name: '学习情况分析',
+    desc: '获取当前登录学生本人的成绩概览和学习分析',
+  },
+};
 export default {
   name: 'McpServiceServerDetail',
   components: { CopyIcon, addDialog, toolDialog },
@@ -286,6 +327,14 @@ export default {
   },
   methods: {
     avatarSrc,
+    displayToolName(tool) {
+      return (
+        (CAMPUS_TOOL_LABELS[tool.methodName] || {}).name || tool.methodName
+      );
+    },
+    displayToolDesc(tool) {
+      return (CAMPUS_TOOL_LABELS[tool.methodName] || {}).desc || tool.desc;
+    },
     initData() {
       this.mcpServerId = this.$route.query.mcpServerId;
       this.tabActive = 0;

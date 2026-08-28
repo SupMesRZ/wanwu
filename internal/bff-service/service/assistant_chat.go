@@ -29,10 +29,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
 	agentEventFailStatus = 4 //事件失败
+
+	executionAuthorizationMetadata = "authorization"
+	executionOrgIDMetadata         = "x-org-id"
 )
 
 type agentChatStreamParams struct {
@@ -531,6 +535,7 @@ func conversationStream(ctx *gin.Context, userId, orgId, clientId string, agentI
 		// 构建参数
 		agentReq, sessionManager := buildAssistantChatParams(ctx, userId, orgId, clientId, req, needLatestPublished)
 		bgCtx := sessionManager.GetBgContext()
+		bgCtx = withExecutionAuthMetadata(bgCtx, ctx.GetHeader("Authorization"), orgId)
 		//执行调用
 		var stream grpc.ServerStreamingClient[assistant_service.AssistantConversionStreamResp]
 		if agentInfo.Category == constant.AgentCategoryMulti {
@@ -551,6 +556,17 @@ func conversationStream(ctx *gin.Context, userId, orgId, clientId string, agentI
 		}
 		return rawCh, callback, nil
 	}
+}
+
+func withExecutionAuthMetadata(ctx context.Context, authorization, orgID string) context.Context {
+	if authorization == "" || orgID == "" || strings.ContainsAny(authorization+orgID, "\r\n") {
+		return ctx
+	}
+	md, _ := metadata.FromOutgoingContext(ctx)
+	md = md.Copy()
+	md.Set(executionAuthorizationMetadata, authorization)
+	md.Set(executionOrgIDMetadata, orgID)
+	return metadata.NewOutgoingContext(ctx, md)
 }
 
 // assistantIteratorReader enio 返回的智能体数据处理器

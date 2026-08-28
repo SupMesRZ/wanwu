@@ -148,6 +148,9 @@ func (s *Service) GetMCPByMCPIdList(ctx context.Context, req *mcp_service.GetMCP
 			}
 			//todo 还可以优化成批量
 			sseUrl, sseExample, streamableUrl, streamableExample := getMCPServerExample(ctx, info.MCPServerID)
+			if info.Kind == "campus" {
+				sseUrl, streamableUrl, sseExample, streamableExample = info.Endpoint, info.Endpoint, "", ""
+			}
 			// 根据 streamableUrl 是否为空决定 transport
 			transport := constant.MCPTransportSSE
 			if streamableUrl != "" {
@@ -163,7 +166,12 @@ func (s *Service) GetMCPByMCPIdList(ctx context.Context, req *mcp_service.GetMCP
 				SseExample:        sseExample,
 				StreamableUrl:     streamableUrl,
 				StreamableExample: streamableExample,
-				Transport:         transport,
+				Transport: func() string {
+					if info.Kind == "campus" {
+						return constant.MCPTransportStreamable
+					}
+					return transport
+				}(),
 			})
 		}
 	}

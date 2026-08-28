@@ -193,6 +193,10 @@ doc-center:
 assistant-template:
   configPath: configs/microservice/bff-service/configs/assistant_template_config.yaml
 
+# Published read-only Campus Student Assistant. Configure its numeric assistant ID after publishing.
+campus-student:
+  assistant_id: ""
+
 workflow-template:
   server_mode: local
   configPath: configs/microservice/bff-service/configs/workflow_template_config.yaml

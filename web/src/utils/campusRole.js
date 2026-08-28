@@ -13,8 +13,8 @@ export const CAMPUS_ROLES = {
     assistantName: '河小智学生助手',
     salutation: '同学',
     subtitle: '你的学习与校园生活智能伙伴',
-    welcome: '我可以帮你查询学业信息、办理校园事务和辅助学习。',
-    examples: ['今天有什么课？', '我下午想请假', '图书馆几点关门？'],
+    welcome: '我可以帮你查询课表、考试、成绩、请假记录和学习情况。',
+    examples: ['今天有什么课？', '查看我的请假记录', '我最近有什么考试？'],
     abilities: [
       { icon: 'el-icon-reading', text: '学业中心' },
       { icon: 'el-icon-edit-outline', text: '事务办理' },

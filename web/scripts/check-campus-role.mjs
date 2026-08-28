@@ -50,4 +50,13 @@ assert.equal(rejectedPreview.previewRole, null);
 assert.equal(rejectedPreview.effectiveRole, 'student');
 assert.equal(role.canAccessCampusRoles(['teacher'], adminPreview), false);
 
+const adminStudentPreview = role.resolveCampusRoleState({
+  roles: [],
+  previewRole: 'student',
+  isAdmin: true,
+});
+assert.equal(adminStudentPreview.actualRole, null);
+assert.equal(adminStudentPreview.effectiveRole, 'student');
+assert.equal(role.canAccessCampusRoles(['student'], adminStudentPreview), false);
+
 console.log('campus role check passed');

@@ -91,27 +91,24 @@ const constantRoutes = [
       {
         path: '/campus/student/courses',
         component: resolve =>
-          require(['@/views/campusPortal/index.vue'], resolve),
+          require(['@/views/campusStudent/courses/index.vue'], resolve),
         meta: {
-          campusPage: 'studentCourses',
           campusRoles: ['student'],
         },
       },
       {
         path: '/campus/student/affairs',
         component: resolve =>
-          require(['@/views/campusPortal/index.vue'], resolve),
+          require(['@/views/campusStudent/affairs/index.vue'], resolve),
         meta: {
-          campusPage: 'studentAffairs',
           campusRoles: ['student'],
         },
       },
       {
         path: '/campus/student/analysis',
         component: resolve =>
-          require(['@/views/campusPortal/index.vue'], resolve),
+          require(['@/views/campusStudent/analysis/index.vue'], resolve),
         meta: {
-          campusPage: 'studentAnalysis',
           campusRoles: ['student'],
         },
       },

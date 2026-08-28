@@ -13,6 +13,7 @@ import (
 	"github.com/UnicomAI/wanwu/internal/bff-service/model/request"
 	"github.com/UnicomAI/wanwu/internal/bff-service/model/response"
 	mcp_util "github.com/UnicomAI/wanwu/internal/bff-service/pkg/mcp-util"
+	"github.com/UnicomAI/wanwu/pkg/campusstudent"
 	"github.com/UnicomAI/wanwu/pkg/constant"
 	grpc_util "github.com/UnicomAI/wanwu/pkg/grpc-util"
 	"github.com/UnicomAI/wanwu/pkg/util"
@@ -27,6 +28,9 @@ func StartMCPServer(ctx context.Context) error {
 		return err
 	}
 	for _, mcpServerInfo := range mcpServerList.List {
+		if mcpServerInfo.McpServerId == campusstudent.MCPCode {
+			continue
+		}
 		mcpServerToolList, err := mcp.GetMCPServerToolList(ctx, &mcp_service.GetMCPServerToolListReq{
 			McpServerId: mcpServerInfo.McpServerId,
 		})
@@ -350,16 +354,31 @@ func createMCPServerTool(ctx *gin.Context, mcpServerID string, builder mcpServer
 }
 
 func toMCPServerInfo(ctx *gin.Context, mcpServerInfo *mcp_service.MCPServerInfo) response.MCPServerInfo {
+	managed := mcpServerInfo.McpServerId == campusstudent.MCPCode
 	return response.MCPServerInfo{
 		MCPServerID: mcpServerInfo.McpServerId,
 		Avatar:      cacheMCPServerAvatar(ctx, mcpServerInfo.AvatarPath),
 		Name:        mcpServerInfo.Name,
 		Desc:        mcpServerInfo.Desc,
 		ToolNum:     mcpServerInfo.ToolNum,
+		Kind: func() string {
+			if managed {
+				return "campus"
+			}
+			return "standard"
+		}(),
+		AuthMode: func() string {
+			if managed {
+				return "campus_execution_context"
+			}
+			return "appkey"
+		}(),
+		Enabled: true,
 	}
 }
 
 func toMCPServerDetail(ctx *gin.Context, mcpServerInfo *mcp_service.MCPServerInfo, mcpServerToolInfos []*mcp_service.MCPServerToolInfo) *response.MCPServerDetail {
+	managed := mcpServerInfo.McpServerId == campusstudent.MCPCode
 	var mcpServerTools []response.MCPServerToolInfo
 	for _, mcpServerToolInfo := range mcpServerToolInfos {
 		mcpServerTools = append(mcpServerTools, response.MCPServerToolInfo{
@@ -382,5 +401,18 @@ func toMCPServerDetail(ctx *gin.Context, mcpServerInfo *mcp_service.MCPServerInf
 		StreamableExample: mcpServerInfo.StreamableExample,
 		Tools:             mcpServerTools,
 		Transport:         mcpServerInfo.Transport,
+		Kind: func() string {
+			if managed {
+				return "campus"
+			}
+			return "standard"
+		}(),
+		AuthMode: func() string {
+			if managed {
+				return "campus_execution_context"
+			}
+			return "appkey"
+		}(),
+		Enabled: true,
 	}
 }

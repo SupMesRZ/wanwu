@@ -7,3 +7,17 @@ services:
   app-service:
     volumes:
       - ./bin/${WANWU_ARCH}/app-service:/app/bin/app-service:ro
+
+  assistant-service:
+    volumes:
+      - ./bin/${WANWU_ARCH}/assistant-service:/app/bin/assistant-service:ro
+
+  agent-service:
+    volumes:
+      - ./bin/${WANWU_ARCH}/agent-service:/app/bin/agent-service:ro
+
+  mcp-service:
+    volumes:
+      - ./bin/${WANWU_ARCH}/mcp-service:/app/bin/mcp-service:ro
+    environment:
+      SERVER_API_BASE_URL: http://bff-service:6667

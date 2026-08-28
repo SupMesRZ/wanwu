@@ -1,0 +1,125 @@
+.campus-student-page {
+  min-height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  color: #1c3150;
+  background: #f4f7fb;
+
+  .student-hero,
+  .student-metrics,
+  .student-panel {
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto 18px;
+    box-sizing: border-box;
+  }
+
+  .student-hero {
+    padding: 28px 34px;
+    color: #fff;
+    border-radius: 16px;
+    background: linear-gradient(120deg, #123c78, #1768c9 68%, #398fda);
+    box-shadow: 0 14px 30px rgba(25, 83, 158, 0.16);
+
+    span {
+      color: rgba(255, 255, 255, 0.66);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+    }
+
+    h1 {
+      margin: 7px 0;
+      font-size: 28px;
+    }
+
+    p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+
+  .student-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+
+    article {
+      padding: 18px 20px;
+      border: 1px solid #e4eaf2;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 14px rgba(33, 69, 116, 0.045);
+    }
+
+    span,
+    small {
+      display: block;
+      color: #8894a5;
+      font-size: 11px;
+    }
+
+    strong {
+      display: block;
+      margin: 6px 0 3px;
+      color: #253d5d;
+      font-size: 22px;
+    }
+  }
+
+  .student-panel {
+    padding: 22px;
+    border: 1px solid #e3e9f1;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 5px 18px rgba(33, 69, 116, 0.05);
+  }
+
+  .panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    h2 {
+      margin: 0 0 4px;
+      color: #253d5d;
+      font-size: 17px;
+    }
+
+    p {
+      margin: 0;
+      color: #8b96a6;
+      font-size: 12px;
+    }
+  }
+
+  .empty-text {
+    padding: 36px 0;
+    color: #98a3b2;
+    text-align: center;
+  }
+
+  .el-table::before {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    padding: 14px;
+
+    .student-metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 520px) {
+    .student-hero {
+      padding: 22px;
+    }
+
+    .student-metrics {
+      grid-template-columns: 1fr;
+    }
+  }
+}

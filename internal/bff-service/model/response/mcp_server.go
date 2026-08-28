@@ -9,6 +9,9 @@ type MCPServerInfo struct {
 	Name        string         `json:"name"`        // 名称
 	Desc        string         `json:"desc"`        // 描述
 	ToolNum     int64          `json:"toolNum"`     // 绑定工具数量
+	Kind        string         `json:"kind,omitempty"`
+	AuthMode    string         `json:"authMode,omitempty"`
+	Enabled     bool           `json:"enabled"`
 }
 
 // MCPServerDetail MCP Server详情
@@ -23,6 +26,9 @@ type MCPServerDetail struct {
 	StreamableExample string              `json:"streamableExample"` // streamable http 连接示例
 	Tools             []MCPServerToolInfo `json:"tools"`             // 绑定工具列表
 	Transport         string              `json:"transport"`         // sse/streamable
+	Kind              string              `json:"kind,omitempty"`
+	AuthMode          string              `json:"authMode,omitempty"`
+	Enabled           bool                `json:"enabled"`
 }
 
 // MCPServerToolInfo MCP Server 绑定工具信息

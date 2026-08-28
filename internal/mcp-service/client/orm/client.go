@@ -11,7 +11,9 @@ import (
 	err_code "github.com/UnicomAI/wanwu/api/proto/err-code"
 
 	"github.com/UnicomAI/wanwu/internal/mcp-service/client/model"
+	mcpconfig "github.com/UnicomAI/wanwu/internal/mcp-service/config"
 
+	"github.com/UnicomAI/wanwu/pkg/campusstudent"
 	"gorm.io/gorm"
 )
 
@@ -34,6 +36,7 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, db *gorm.DB) (*Client, error) {
+	c := &Client{db: db}
 	if err := db.AutoMigrate(&Metadata{}); err != nil {
 		return nil, err
 	}
@@ -71,9 +74,48 @@ func NewClient(ctx context.Context, db *gorm.DB) (*Client, error) {
 	if err := initCustomSkillCounts(db); err != nil {
 		return nil, err
 	}
-	return &Client{
-		db: db,
-	}, nil
+	endpoint := campusstudent.Endpoint(mcpconfig.Cfg().Server.ApiBaseUrl)
+	tools := make([]model.MCPServerTool, 0, len(campusstudent.ToolDefinitions(endpoint)))
+	for _, def := range campusstudent.ToolDefinitions(endpoint) {
+		tools = append(tools, model.MCPServerTool{MCPServerToolId: campusstudent.MCPCode + "_" + def.Name, Name: def.Name, Description: def.Description, Schema: def.Schema})
+	}
+	if err := c.ensureCampusStudentMCP(ctx, tools); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (c *Client) ensureCampusStudentMCP(ctx context.Context, tools []model.MCPServerTool) error {
+	endpoint := campusstudent.Endpoint(mcpconfig.Cfg().Server.ApiBaseUrl)
+	code := campusstudent.MCPCode
+	var server model.MCPServer
+	err := c.db.WithContext(ctx).Where("code = ?", campusstudent.MCPCode).First(&server).Error
+	enabled := true
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		server = model.MCPServer{MCPServerID: campusstudent.MCPCode, Code: &code, Name: "河小智学生业务 MCP", Description: "河北大学河小智学生校园业务能力连接服务", Kind: "campus", Endpoint: endpoint, AuthMode: "campus_execution_context", Enabled: &enabled, UserID: "system", OrgID: "system"}
+		if err := c.db.WithContext(ctx).Create(&server).Error; err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	} else if err := c.db.WithContext(ctx).Model(&server).Updates(map[string]any{"name": "河小智学生业务 MCP", "description": "河北大学河小智学生校园业务能力连接服务", "kind": "campus", "endpoint": endpoint, "auth_mode": "campus_execution_context", "enabled": true}).Error; err != nil {
+		return err
+	}
+	for _, tool := range tools {
+		var existing model.MCPServerTool
+		q := c.db.WithContext(ctx).Where("mcp_server_id = ? AND name = ?", server.MCPServerID, tool.Name).First(&existing)
+		if errors.Is(q.Error, gorm.ErrRecordNotFound) {
+			tool.McpServerId, tool.UserID, tool.OrgID = server.MCPServerID, "system", "system"
+			if err := c.db.WithContext(ctx).Create(&tool).Error; err != nil {
+				return err
+			}
+		} else if q.Error != nil {
+			return q.Error
+		} else if err := c.db.WithContext(ctx).Model(&existing).Updates(map[string]any{"description": tool.Description, "schema": tool.Schema, "auth_type": "", "auth_in": "", "auth_name": "", "auth_value": ""}).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func initLegacyAcquiredSkillCleanup(db *gorm.DB) error {

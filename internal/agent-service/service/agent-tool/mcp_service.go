@@ -3,11 +3,16 @@ package agent_tool
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/UnicomAI/wanwu/internal/agent-service/model/request"
+	"github.com/UnicomAI/wanwu/internal/agent-service/pkg/config"
+	execution_context "github.com/UnicomAI/wanwu/internal/agent-service/pkg/execution-context"
 	mcp_client "github.com/UnicomAI/wanwu/internal/agent-service/service/mcp-client"
 	"github.com/UnicomAI/wanwu/pkg/constant"
+	gin_util "github.com/UnicomAI/wanwu/pkg/gin-util"
 	"github.com/UnicomAI/wanwu/pkg/log"
 	mcp_util "github.com/UnicomAI/wanwu/pkg/mcp-util"
 	"github.com/cloudwego/eino-ext/components/tool/mcp"
@@ -18,6 +23,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 )
+
+const campusStudentMCPPath = "/v1/campus/student/mcp"
 
 type MCPServerInfo struct {
 	Transport    string   `json:"transport"`
@@ -30,7 +37,7 @@ type MCPServerInfo struct {
 func createMCPClient(ctx context.Context, mcpToolInfo *request.MCPToolInfo) (client.MCPClient, error) {
 	var mcpClient *client.Client
 	var transportType = mcpToolInfo.Transport
-	url, headers, err := mcp_util.MergeMcpParams(mcpToolInfo.URL, mcpToolInfo.ApiAuth, mcpToolInfo.Headers)
+	url, headers, err := buildMCPConnectionParams(ctx, mcpToolInfo)
 	if err != nil {
 		log.Errorf("failed to merge mcp params: %v", err)
 		return nil, fmt.Errorf("failed to merge mcp params: %w", err)
@@ -106,11 +113,12 @@ func GetToolsFromMCPServers(ctx context.Context, toolParamsList []*request.MCPTo
 	var toolMap = make(map[string]*request.ToolConfig)
 
 	for _, serverInfo := range toolParamsList {
-		log.Infof("Connecting to MCP server: %v", serverInfo)
+		label := mcpServerLogLabel(serverInfo)
+		log.Infof("Connecting to MCP server: %s", label)
 
 		mcpClient, err := createMCPClient(ctx, serverInfo)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create MCP client for %v: %v", serverInfo, err)
+			return nil, nil, fmt.Errorf("failed to create MCP client for %s: %v", label, err)
 		}
 		// 注意:不要在这里关闭客户端,因为工具在后续使用时还需要这个连接
 		// defer mcpClient.Close()
@@ -120,10 +128,10 @@ func GetToolsFromMCPServers(ctx context.Context, toolParamsList []*request.MCPTo
 			ToolNameList: serverInfo.ToolNameList,
 		})
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get mcp tools from %v: %v", serverInfo, err)
+			return nil, nil, fmt.Errorf("failed to get mcp tools from %s: %v", label, err)
 		}
 
-		log.Infof("Loaded %d tools from %v", len(tools), serverInfo)
+		log.Infof("Loaded %d tools from %s", len(tools), label)
 		if len(serverInfo.ToolNameList) > 0 {
 			//mcp 的方法名先不做替换，因为mcp的函数名基本都是符合规则一般不会有特殊字符
 			for _, toolName := range serverInfo.ToolNameList {
@@ -138,4 +146,92 @@ func GetToolsFromMCPServers(ctx context.Context, toolParamsList []*request.MCPTo
 	}
 
 	return allTools, toolMap, nil
+}
+
+func buildMCPConnectionParams(ctx context.Context, info *request.MCPToolInfo) (string, map[string]string, error) {
+	apiAuth := info.ApiAuth
+	headers := info.Headers
+	bffEndpoint := ""
+	if config.GetConfig().BffServer != nil {
+		bffEndpoint = config.GetConfig().BffServer.Endpoint
+	}
+	campusEndpoint := isExactCampusStudentMCPURL(info.URL, bffEndpoint)
+	if campusEndpoint {
+		apiAuth = nil
+		headers = withoutIdentityHeaders(headers)
+	}
+
+	mergedURL, mergedHeaders, err := mcp_util.MergeMcpParams(info.URL, apiAuth, headers)
+	if err != nil {
+		return "", nil, err
+	}
+	if mergedHeaders == nil {
+		mergedHeaders = make(map[string]string)
+	}
+	if campusEndpoint {
+		if authorization, orgID, ok := execution_context.FromContext(ctx); ok {
+			mergedHeaders["Authorization"] = authorization
+			mergedHeaders[gin_util.X_ORG_ID] = orgID
+		}
+	}
+	return mergedURL, mergedHeaders, nil
+}
+
+func isExactCampusStudentMCPURL(target, bffEndpoint string) bool {
+	allowedBase, err := campusMCPBFFBaseURL(bffEndpoint)
+	if err != nil {
+		return false
+	}
+	allowed, err := url.JoinPath(allowedBase, campusStudentMCPPath)
+	if err != nil {
+		return false
+	}
+	targetURL, err := url.Parse(target)
+	if err != nil {
+		return false
+	}
+	allowedURL, err := url.Parse(allowed)
+	if err != nil {
+		return false
+	}
+	return exactMCPURL(targetURL, allowedURL)
+}
+
+func campusMCPBFFBaseURL(bffEndpoint string) (string, error) {
+	u, err := url.Parse(bffEndpoint)
+	if err != nil || u.Scheme == "" || u.Hostname() == "" {
+		return "", fmt.Errorf("invalid bff endpoint")
+	}
+	// BFF callback traffic uses 6668; Campus HTTP routes are served on 6667.
+	if u.Port() == "6668" {
+		u.Host = u.Hostname() + ":6667"
+	}
+	u.Path, u.RawQuery, u.Fragment = "", "", ""
+	return strings.TrimRight(u.String(), "/"), nil
+}
+
+func exactMCPURL(target, allowed *url.URL) bool {
+	return allowed.Scheme != "" && allowed.Hostname() != "" &&
+		allowed.User == nil && allowed.RawQuery == "" && !allowed.ForceQuery && allowed.Fragment == "" && allowed.Opaque == "" &&
+		target.Scheme == allowed.Scheme &&
+		target.Hostname() == allowed.Hostname() &&
+		target.Port() == allowed.Port() &&
+		target.EscapedPath() == allowed.EscapedPath() &&
+		target.User == nil && target.RawQuery == "" && !target.ForceQuery && target.Fragment == "" && target.Opaque == ""
+}
+
+func withoutIdentityHeaders(headers map[string]string) map[string]string {
+	filtered := make(map[string]string, len(headers))
+	for key, value := range headers {
+		switch strings.ToLower(key) {
+		case "authorization", "x-org-id", "x-user-id", "x-student-id", "x-role", "x-preview-role":
+			continue
+		}
+		filtered[key] = value
+	}
+	return filtered
+}
+
+func mcpServerLogLabel(info *request.MCPToolInfo) string {
+	return fmt.Sprintf("transport=%s tools=%v", info.Transport, info.ToolNameList)
 }

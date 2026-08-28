@@ -22,7 +22,13 @@ import (
 	"github.com/UnicomAI/wanwu/pkg/log"
 	sse_util "github.com/UnicomAI/wanwu/pkg/sse-util"
 	"github.com/UnicomAI/wanwu/pkg/util"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
+)
+
+const (
+	executionAuthorizationMetadata = "authorization"
+	executionOrgIDMetadata         = "x-org-id"
 )
 
 // ConversationCreate 创建对话
@@ -209,7 +215,7 @@ func (s *Service) AssistantConversionStream(req *assistant_service.AssistantConv
 	conversationProcessor := &service.ConversationProcessor{
 		SSEWriter: sse_util.NewGrpcSSEWriter(stream, "AssistantConversionStreamNew", nil),
 	}
-	err := conversationProcessor.Process(stream.Context(), buildConversationParams(req), buildAgentSendRequest(req))
+	err := conversationProcessor.Process(stream.Context(), buildConversationParams(req), buildAgentSendRequest(req, executionAuthHeaders(stream.Context())))
 	if err != nil {
 		log.Errorf("Assistant服务处理智能体流式对话失败，assistantId: %s, error: %v", req.AssistantId, err)
 		return grpc_util.ErrorStatusWithKey(errs.Code_AssistantConversationErr, "assistant_conversation", "agent服务异常")
@@ -317,7 +323,7 @@ func buildConversationParams(req *assistant_service.AssistantConversionStreamReq
 }
 
 // buildAgentSendRequest 构建底层智能体能力接口请求体
-func buildAgentSendRequest(req *assistant_service.AssistantConversionStreamReq) func(ctx context.Context) (string, *http.Response, context.CancelFunc, error) {
+func buildAgentSendRequest(req *assistant_service.AssistantConversionStreamReq, executionHeaders map[string]string) func(ctx context.Context) (string, *http.Response, context.CancelFunc, error) {
 	var conversationID string
 	// 历史聊天记录配置
 	if req.ConversationId != "" {
@@ -348,6 +354,7 @@ func buildAgentSendRequest(req *assistant_service.AssistantConversionStreamReq) 
 			return monitorKey, nil, nil, errors.New("智能体SSE URL配置错误")
 		}
 		params := &http_client.HttpRequestParams{
+			Headers:    executionHeaders,
 			Body:       paramsBytes,
 			Timeout:    15 * time.Minute,
 			Url:        assistantConfig.NewSseUrl,
@@ -361,6 +368,35 @@ func buildAgentSendRequest(req *assistant_service.AssistantConversionStreamReq) 
 		}
 		return monitorKey, result, cancelFunction, err
 	}
+}
+
+func executionAuthHeaders(ctx context.Context) map[string]string {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil
+	}
+	authorization := firstMetadataValue(md, executionAuthorizationMetadata)
+	orgID := firstMetadataValue(md, executionOrgIDMetadata)
+	if !validExecutionAuthorization(authorization) || orgID == "" || strings.ContainsAny(orgID, "\r\n") {
+		return nil
+	}
+	return map[string]string{
+		"Authorization": authorization,
+		"X-Org-Id":      orgID,
+	}
+}
+
+func firstMetadataValue(md metadata.MD, key string) string {
+	values := md.Get(key)
+	if len(values) == 0 {
+		return ""
+	}
+	return values[0]
+}
+
+func validExecutionAuthorization(value string) bool {
+	scheme, token, ok := strings.Cut(value, " ")
+	return ok && scheme == "Bearer" && token != "" && !strings.ContainsAny(token, " \r\n")
 }
 
 func buildConversationResponse(response string, conversation []*model.ConversationResponse, startOrder int) []*assistant_service.ConversationResponse {

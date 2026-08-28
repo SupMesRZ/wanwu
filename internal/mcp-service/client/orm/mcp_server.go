@@ -64,11 +64,11 @@ func (c *Client) GetMCPServer(ctx context.Context, mcpServerId string) (*model.M
 
 func (c *Client) ListMCPServers(ctx context.Context, orgID, userID, name string) ([]*model.MCPServer, *errs.Status) {
 	var mcpServerInfos []*model.MCPServer
-	if err := sqlopt.SQLOptions(
-		sqlopt.WithOrgID(orgID),
-		sqlopt.WithUserID(userID),
-		sqlopt.LikeName(name),
-	).Apply(c.db).WithContext(ctx).Order("updated_at desc").Find(&mcpServerInfos).Error; err != nil {
+	db := c.db.WithContext(ctx)
+	if name != "" {
+		db = db.Where("name LIKE ?", "%"+name+"%")
+	}
+	if err := db.Where("(org_id = ? AND user_id = ?) OR kind = ?", orgID, userID, "campus").Order("updated_at desc").Find(&mcpServerInfos).Error; err != nil {
 		return nil, toErrStatus("mcp_get_mcp_server_list_err", err.Error())
 	}
 	return mcpServerInfos, nil

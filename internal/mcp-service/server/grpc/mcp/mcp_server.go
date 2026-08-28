@@ -33,7 +33,11 @@ func (s *Service) CreateMCPServer(ctx context.Context, req *mcp_service.CreateMC
 		AvatarPath:  req.AvatarPath,
 		UserID:      req.Identity.UserId,
 		OrgID:       req.Identity.OrgId,
+		Kind:        "standard",
+		AuthMode:    "appkey",
 	}
+	enabled := true
+	mcpServer.Enabled = &enabled
 	err := s.cli.CreateMCPServer(ctx, mcpServer)
 	if err != nil {
 		return nil, errStatus(errs.Code_MCPCreateMCPServerErr, err)
@@ -61,6 +65,9 @@ func (s *Service) GetMCPServer(ctx context.Context, req *mcp_service.GetMCPServe
 		return nil, errStatus(errs.Code_MCPGetMCPServerInfoErr, err)
 	}
 	sseUrl, sseExample, streamableUrl, streamableExample := getMCPServerExample(ctx, req.McpServerId)
+	if info.Kind == "campus" {
+		sseUrl, streamableUrl, sseExample, streamableExample = info.Endpoint, info.Endpoint, "", ""
+	}
 	return &mcp_service.MCPServerInfo{
 		Name:              info.Name,
 		McpServerId:       info.MCPServerID,
@@ -70,11 +77,23 @@ func (s *Service) GetMCPServer(ctx context.Context, req *mcp_service.GetMCPServe
 		SseExample:        sseExample,
 		StreamableUrl:     streamableUrl,
 		StreamableExample: streamableExample,
-		Transport:         constant.MCPTransportSSE,
+		Transport: func() string {
+			if info.Kind == "campus" {
+				return constant.MCPTransportStreamable
+			}
+			return constant.MCPTransportSSE
+		}(),
 	}, nil
 }
 
 func (s *Service) DeleteMCPServer(ctx context.Context, req *mcp_service.DeleteMCPServerReq) (*emptypb.Empty, error) {
+	info, status := s.cli.GetMCPServer(ctx, req.McpServerId)
+	if status != nil {
+		return nil, errStatus(errs.Code_MCPDeleteMCPServerErr, status)
+	}
+	if info.Kind == "campus" {
+		return nil, errStatus(errs.Code_MCPDeleteMCPServerErr, toErrStatus("mcp_delete_managed_server_forbidden"))
+	}
 	err := s.cli.DeleteMCPServer(ctx, req.McpServerId)
 	if err != nil {
 		return nil, errStatus(errs.Code_MCPDeleteMCPServerErr, err)
@@ -98,6 +117,9 @@ func (s *Service) GetMCPServerList(ctx context.Context, req *mcp_service.GetMCPS
 			return nil, errStatus(errs.Code_MCPGetMCPServerListErr, err)
 		}
 		sseUrl, sseExample, streamableUrl, streamableExample := getMCPServerExample(ctx, info.MCPServerID)
+		if info.Kind == "campus" {
+			sseUrl, streamableUrl, sseExample, streamableExample = info.Endpoint, info.Endpoint, "", ""
+		}
 		list = append(list, &mcp_service.MCPServerInfo{
 			McpServerId:       info.MCPServerID,
 			Name:              info.Name,
@@ -108,7 +130,12 @@ func (s *Service) GetMCPServerList(ctx context.Context, req *mcp_service.GetMCPS
 			SseExample:        sseExample,
 			StreamableUrl:     streamableUrl,
 			StreamableExample: streamableExample,
-			Transport:         constant.MCPTransportSSE,
+			Transport: func() string {
+				if info.Kind == "campus" {
+					return constant.MCPTransportStreamable
+				}
+				return constant.MCPTransportSSE
+			}(),
 		})
 	}
 	return &mcp_service.GetMCPServerListResp{

@@ -57,7 +57,7 @@ func (s *Service) MultiAssistantConversionStream(req *assistant_service.MultiAss
 	conversationProcessor := &service.ConversationProcessor{
 		SSEWriter: sse_util.NewGrpcSSEWriter(stream, "MultiAssistantConversionStreamNew", nil),
 	}
-	err := conversationProcessor.Process(stream.Context(), buildMultiConversationParams(req), buildMultiAgentSendRequest(req))
+	err := conversationProcessor.Process(stream.Context(), buildMultiConversationParams(req), buildMultiAgentSendRequest(req, executionAuthHeaders(stream.Context())))
 	if err != nil {
 		log.Errorf("Assistant服务处理智能体流式对话失败，assistantId: %s, error: %v", req.AssistantId, err)
 		return grpc_util.ErrorStatusWithKey(errs.Code_AssistantConversationErr, "assistant_conversation", "agent服务异常")
@@ -130,7 +130,7 @@ func buildMultiConversationParams(req *assistant_service.MultiAssistantConversio
 }
 
 // buildMultiAgentSendRequest 构建底层智能体能力接口请求体
-func buildMultiAgentSendRequest(req *assistant_service.MultiAssistantConversionStreamReq) func(ctx context.Context) (string, *http.Response, context.CancelFunc, error) {
+func buildMultiAgentSendRequest(req *assistant_service.MultiAssistantConversionStreamReq, executionHeaders map[string]string) func(ctx context.Context) (string, *http.Response, context.CancelFunc, error) {
 	var conversationID string
 	// 历史聊天记录配置
 	if req.ConversationId != "" {
@@ -160,6 +160,7 @@ func buildMultiAgentSendRequest(req *assistant_service.MultiAssistantConversionS
 			return monitorKey, nil, nil, errors.New("多智能体会话URL配置错误")
 		}
 		params := &http_client.HttpRequestParams{
+			Headers:    executionHeaders,
 			Body:       paramsBytes,
 			Timeout:    15 * time.Minute,
 			Url:        assistantConfig.MultiAgentChatUrl,

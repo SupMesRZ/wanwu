@@ -1,6 +1,15 @@
 <template>
   <div class="smart-assistant-page">
-    <CampusAgent v-if="roleProfile" ref="campusAgent">
+    <el-alert
+      v-if="isStudentPreview"
+      title="当前为学生界面预览模式，个人校园智能查询仅对真实学生账号开放。"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="preview-alert"
+    />
+
+    <component :is="assistantComponent" v-if="roleProfile" ref="campusAgent">
       <template #header-title>
         <div class="assistant-title">
           <span :class="['assistant-logo', { image: platformLogo }]">
@@ -70,7 +79,7 @@
           </div>
         </div>
       </template>
-    </CampusAgent>
+    </component>
 
     <div v-else class="role-empty">
       <i class="el-icon-user"></i>
@@ -115,6 +124,7 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import CampusAgent from '@/views/generalAgent/index.vue';
+import CampusStudentAssistant from '@/views/campusStudent/assistant/index.vue';
 import { avatarSrc } from '@/utils/util';
 import {
   CAMPUS_ROLES,
@@ -144,7 +154,7 @@ const servicePrompts = {
 
 export default {
   name: 'SmartAssistant',
-  components: { CampusAgent },
+  components: { CampusAgent, CampusStudentAssistant },
   data() {
     return {
       demoVisible: false,
@@ -161,26 +171,19 @@ export default {
           },
           {
             key: 'affairs',
-            name: '事务办理',
-            description: '一句话发起请假等校园流程',
+            name: '请假记录',
+            description: '查询我的历史请假记录',
             icon: 'el-icon-edit-outline',
-            type: 'mock',
-            prompt: '我下午想请假',
-            steps: [
-              '学生 Agent 解析时间、原因与请假类型',
-              '检查缺失参数并启动请假 Workflow',
-              '通过学工 MCP 提交模拟学工系统',
-            ],
-            answer:
-              '已识别为事假，时间为今天下午。请补充请假原因，确认后将提交辅导员审批。',
+            type: 'agent',
+            prompt: '查看我的请假记录',
           },
           {
             key: 'campus',
-            name: '校园服务',
-            description: '知识问答与实时校园服务',
+            name: '考试安排',
+            description: '查询近期考试时间和地点',
             icon: 'el-icon-school',
             type: 'agent',
-            prompt: '图书馆几点关门？',
+            prompt: '我最近有什么考试？',
           },
           {
             key: 'learning',
@@ -271,6 +274,17 @@ export default {
     roleProfile() {
       return getCampusRoleProfile(this.campusRole.effectiveRole);
     },
+    assistantComponent() {
+      return this.campusRole.actualRole === 'student'
+        ? 'CampusStudentAssistant'
+        : 'CampusAgent';
+    },
+    isStudentPreview() {
+      return (
+        this.campusRole.previewRole === 'student' &&
+        this.campusRole.actualRole !== 'student'
+      );
+    },
     roleModules() {
       return this.roleProfile ? this.modules[this.roleProfile.key] || [] : [];
     },
@@ -350,6 +364,15 @@ export default {
 .smart-assistant-page {
   position: absolute;
   inset: 0;
+}
+
+.preview-alert {
+  position: absolute;
+  z-index: 20;
+  top: 72px;
+  left: 50%;
+  width: min(680px, calc(100% - 40px));
+  transform: translateX(-50%);
 }
 
 .assistant-title,
