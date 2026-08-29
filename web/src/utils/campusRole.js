@@ -1,5 +1,8 @@
 export const CAMPUS_ROLE_KEYS = ['student', 'teacher', 'academic_admin'];
 
+export const campusStudentAssistantAvatar = path =>
+  path || window.location.origin + require('@/assets/imgs/robot-icon.png');
+
 export const CAMPUS_ROLE_STATUS = {
   RESOLVED: 'resolved',
   UNCONFIGURED: 'unconfigured',
@@ -14,7 +17,14 @@ export const CAMPUS_ROLES = {
     salutation: '同学',
     subtitle: '你的学习与校园生活智能伙伴',
     welcome: '我可以帮你查询课表、考试、成绩、请假记录和学习情况。',
-    examples: ['今天有什么课？', '查看我的请假记录', '我最近有什么考试？'],
+    examples: [
+      '我今天有什么课？',
+      '帮我看看本周课程',
+      '查询我的考试安排',
+      '查一下我的成绩',
+      '看看我的请假记录',
+      '分析一下我的学习情况',
+    ],
     abilities: [
       { icon: 'el-icon-reading', text: '学业中心' },
       { icon: 'el-icon-edit-outline', text: '事务办理' },

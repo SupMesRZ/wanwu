@@ -15,13 +15,14 @@
   }
 
   .student-hero {
-    padding: 28px 34px;
+    position: relative;
+    padding: 28px 180px 28px 34px;
     color: #fff;
     border-radius: 16px;
     background: linear-gradient(120deg, #123c78, #1768c9 68%, #398fda);
     box-shadow: 0 14px 30px rgba(25, 83, 158, 0.16);
 
-    span {
+    > span {
       color: rgba(255, 255, 255, 0.66);
       font-size: 11px;
       font-weight: 700;
@@ -36,6 +37,15 @@
     p {
       margin: 0;
       color: rgba(255, 255, 255, 0.8);
+    }
+
+    .student-hero__assistant {
+      position: absolute;
+      top: 50%;
+      right: 34px;
+      color: #1559c5;
+      border: 0;
+      transform: translateY(-50%);
     }
   }
 
@@ -107,6 +117,16 @@
 
   @media (max-width: 900px) {
     padding: 14px;
+
+    .student-hero {
+      padding: 28px 34px;
+
+      .student-hero__assistant {
+        position: static;
+        margin-top: 18px;
+        transform: none;
+      }
+    }
 
     .student-metrics {
       grid-template-columns: repeat(2, minmax(0, 1fr));

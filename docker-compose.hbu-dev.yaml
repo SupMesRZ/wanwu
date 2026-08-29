@@ -1,7 +1,12 @@
 services:
+  nginx:
+    volumes:
+      - ./web/dist:/usr/share/nginx/html/aibase:ro
+
   bff-service:
     volumes:
       - ./bin/${WANWU_ARCH}/bff-service:/app/bin/bff-service:ro
+      - ./configs/microservice/bff-service/configs/config.yaml:/app/configs/microservice/bff-service/configs/config.yaml:ro
       - ./configs/microservice/bff-service/configs/wga/agents/Supervisor/config.yaml:/app/configs/microservice/bff-service/configs/wga/agents/Supervisor/config.yaml:ro
 
   app-service:

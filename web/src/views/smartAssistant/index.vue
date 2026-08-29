@@ -16,7 +16,8 @@
             <img
               v-if="platformLogo"
               :src="avatarSrc(platformLogo)"
-              alt="河小智"
+              alt="河北大学校徽"
+              @error="handlePlatformLogoError"
             />
             <i v-else class="el-icon-cpu"></i>
           </span>
@@ -143,6 +144,8 @@ const servicePrompts = {
   schedule: '今天有什么课？',
   exam: '下周有哪些考试？',
   score: '这学期成绩出了哪些？',
+  leave: '看看我的请假记录',
+  learning: '分析一下我的学习情况',
   repair: '宿舍水龙头漏水，帮我提交报修。',
   library: '图书馆几点关门？',
   teaching: '我今天有哪些课？',
@@ -174,8 +177,8 @@ export default {
             name: '请假记录',
             description: '查询我的历史请假记录',
             icon: 'el-icon-edit-outline',
-            type: 'agent',
-            prompt: '查看我的请假记录',
+            type: 'route',
+            path: '/campus/student/affairs',
           },
           {
             key: 'campus',
@@ -184,6 +187,14 @@ export default {
             icon: 'el-icon-school',
             type: 'agent',
             prompt: '我最近有什么考试？',
+          },
+          {
+            key: 'score',
+            name: '我的成绩',
+            description: '查询学期成绩与课程表现',
+            icon: 'el-icon-trophy',
+            type: 'agent',
+            prompt: '查一下我的成绩',
           },
           {
             key: 'learning',
@@ -329,6 +340,9 @@ export default {
   methods: {
     avatarSrc,
     ...mapActions('user', ['setCampusPreviewRole']),
+    handlePlatformLogoError(event) {
+      event.currentTarget.src = require('@/assets/imgs/robot-icon.png');
+    },
     async switchRole(previewRole) {
       const campusRole = await this.setCampusPreviewRole(previewRole);
       if (campusRole.previewRole !== previewRole) return;
@@ -412,12 +426,15 @@ export default {
 
 .assistant-name {
   display: flex;
+  justify-content: center;
   min-width: 190px;
+  height: 34px;
   flex-direction: column;
 
   strong {
     color: #202123;
     font-size: 14px;
+    line-height: 16px;
   }
 
   small {
@@ -425,6 +442,7 @@ export default {
     color: #8a8f98;
     font-size: 10px;
     font-weight: 400;
+    line-height: 14px;
   }
 }
 

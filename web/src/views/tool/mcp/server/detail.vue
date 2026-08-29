@@ -178,12 +178,12 @@
                 </template>
               </el-table-column>
               <el-table-column
+                v-if="detail.kind !== 'campus'"
                 :label="$t('tool.server.bind.operate')"
                 width="200"
               >
                 <template #default="scope">
                   <el-button
-                    v-if="detail.kind !== 'campus'"
                     v-if="scope.row.isEditing"
                     size="mini"
                     type="primary"
@@ -198,11 +198,7 @@
                   >
                     {{ $t('common.button.edit') }}
                   </el-button>
-                  <el-button
-                    v-if="detail.kind !== 'campus'"
-                    size="mini"
-                    @click="handleDeleteTool(scope.row)"
-                  >
+                  <el-button size="mini" @click="handleDeleteTool(scope.row)">
                     {{ $t('common.button.delete') }}
                   </el-button>
                 </template>

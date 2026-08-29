@@ -74,3 +74,16 @@ func TestMCPServerLogLabelDoesNotContainBearer(t *testing.T) {
 		t.Fatalf("credential present in log label: %s", label)
 	}
 }
+
+func TestSameToolNames(t *testing.T) {
+	want := []string{"query_my_schedule", "query_my_score"}
+	if !sameToolNames([]string{"query_my_score", "query_my_schedule"}, want) {
+		t.Fatal("same tool names in a different order should match")
+	}
+	if sameToolNames([]string{"query_my_schedule"}, want) || sameToolNames([]string{"query_my_schedule", "other"}, want) {
+		t.Fatal("missing or unexpected tool names should not match")
+	}
+	if sameToolNames([]string{"query_my_schedule", "query_my_schedule"}, want) {
+		t.Fatal("duplicate tool names should not hide a missing tool")
+	}
+}

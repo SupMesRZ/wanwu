@@ -134,6 +134,9 @@ func Connect[T any](ctx context.Context, userSession *model.Session,
 }
 
 func Close(userSession *model.Session) error {
+	if userSession == nil {
+		return nil
+	}
 	manager := Connector.get(userSession.SessionID())
 	if manager == nil {
 		return nil

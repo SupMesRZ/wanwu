@@ -18,6 +18,7 @@ export const getStudentLearningAnalysis = params =>
   get('/learning-analysis', params);
 export const getStudentLeaveRecords = () => get('/leave-records');
 
+export const getStudentAssistantBinding = () => get('/assistant/binding');
 export const getStudentAssistant = () => get('/assistant');
 export const createStudentAssistantConversation = message =>
   service({

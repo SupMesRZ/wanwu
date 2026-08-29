@@ -32,6 +32,11 @@ func CheckCampusStudentRole(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
+	if permission.OrgPermission.IsAdmin || permission.OrgPermission.IsSystem {
+		gin_util.ResponseErrWithStatus(ctx, http.StatusForbidden, errors.New("campus student role required"))
+		ctx.Abort()
+		return
+	}
 	role, status := service.ResolveActualCampusRole(permission.OrgPermission.Roles)
 	if status != service.CampusRoleResolved {
 		gin_util.ResponseErrWithStatus(ctx, http.StatusForbidden, errors.New("campus role is "+status))

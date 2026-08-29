@@ -50,7 +50,9 @@
               <small>{{ agent.audience }}</small>
               <h3>{{ agent.name }}</h3>
             </div>
-            <el-tag size="mini" type="success" effect="plain">运行中</el-tag>
+            <el-tag size="mini" :type="agentStatus(agent).type" effect="plain">
+              {{ agentStatus(agent).text }}
+            </el-tag>
           </div>
           <p>{{ agent.description }}</p>
           <div class="ability-list">
@@ -78,7 +80,36 @@
             </div>
           </div>
           <div class="agent-actions">
-            <el-button type="primary" size="small" @click="experience(agent)">
+            <template v-if="agent.key === 'student'">
+              <el-button
+                type="primary"
+                size="small"
+                :disabled="!studentBinding.assistantId"
+                @click="editStudentAssistant"
+              >
+                编辑配置
+              </el-button>
+              <el-button
+                size="small"
+                :disabled="!studentBinding.assistantId"
+                @click="publishStudentAssistant"
+              >
+                发布
+              </el-button>
+              <el-button
+                size="small"
+                :disabled="!studentBinding.published"
+                @click="previewStudentAssistant"
+              >
+                预览
+              </el-button>
+            </template>
+            <el-button
+              v-else
+              type="primary"
+              size="small"
+              @click="experience(agent)"
+            >
               体验助手
             </el-button>
             <el-button size="small" @click="showDetail(agent)">
@@ -176,6 +207,7 @@
 
 <script>
 import { checkPerm, PERMS } from '@/router/permission';
+import { getStudentAssistantBinding } from '@/api/campusStudent';
 
 export default {
   name: 'AgentCenter',
@@ -183,6 +215,11 @@ export default {
     return {
       detailVisible: false,
       activeAgent: {},
+      studentBinding: {
+        assistantId: '',
+        published: false,
+        ready: false,
+      },
       summaries: [
         {
           label: '运行中智能体',
@@ -320,7 +357,45 @@ export default {
       return checkPerm(PERMS.AGENT);
     },
   },
+  created() {
+    if (this.canCreateAgent) this.loadStudentBinding();
+  },
   methods: {
+    async loadStudentBinding() {
+      const res = await getStudentAssistantBinding();
+      if (res.code === 0 && res.data) this.studentBinding = res.data;
+    },
+    agentStatus(agent) {
+      if (agent.key !== 'student') return { type: 'success', text: '运行中' };
+      if (this.studentBinding.ready) return { type: 'success', text: '已发布' };
+      if (this.studentBinding.published)
+        return { type: 'warning', text: '配置待修正' };
+      return {
+        type: 'info',
+        text: this.studentBinding.assistantId ? '待发布' : '未绑定',
+      };
+    },
+    editStudentAssistant() {
+      this.$router.push({
+        path: '/agent/test',
+        query: { id: this.studentBinding.assistantId },
+      });
+    },
+    publishStudentAssistant() {
+      this.$router.push({
+        path: '/agent/publishSet',
+        query: {
+          appId: this.studentBinding.assistantId,
+          appType: 'agent',
+          name: this.studentBinding.name || '河小智·学生助手',
+        },
+      });
+    },
+    previewStudentAssistant() {
+      this.$router.push(
+        `/campus/student/assistant/preview/${this.studentBinding.assistantId}`,
+      );
+    },
     experience(agent) {
       this.$router.push({
         path: '/smartAssistant',

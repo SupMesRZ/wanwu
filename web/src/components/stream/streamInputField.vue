@@ -189,6 +189,7 @@ import { getFileIconType } from '@/utils/util';
 export default {
   props: {
     source: { type: String },
+    customPlaceholder: { type: String, default: '' },
     fileTypeArr: {
       type: Array,
       required: false,
@@ -322,9 +323,12 @@ export default {
       ].filter(group => group.files.length);
     },
     placeholder() {
-      return this.supportReminder
-        ? this.$t('common.input.modelChatPlaceholder2')
-        : this.$t('common.input.modelChatPlaceholder1');
+      return (
+        this.customPlaceholder ||
+        (this.supportReminder
+          ? this.$t('common.input.modelChatPlaceholder2')
+          : this.$t('common.input.modelChatPlaceholder1'))
+      );
     },
     maxImageSizeMB() {
       const maxSize = Number(this.maxImageSize);

@@ -1,9 +1,12 @@
 package agent_tool
 
 import (
+	"errors"
+
 	"github.com/UnicomAI/wanwu/internal/agent-service/model/request"
 	"github.com/UnicomAI/wanwu/internal/agent-service/pkg/config"
 	service_model "github.com/UnicomAI/wanwu/internal/agent-service/service/service-model"
+	"github.com/UnicomAI/wanwu/pkg/log"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
@@ -25,7 +28,14 @@ func BuildAgentToolsConfig(ctx *gin.Context, req *request.AgentChatParams, chatI
 	//mcp 工具
 	var toolList []tool.BaseTool
 	//mcp 不用替换工具名
-	mcpToolList, mcpToolIDNameMap, _ := GetToolsFromMCPServers(ctx.Request.Context(), req.ToolParams.McpToolList)
+	mcpToolList, mcpToolIDNameMap, mcpErr := GetToolsFromMCPServers(ctx.Request.Context(), req.ToolParams.McpToolList)
+	if mcpErr != nil {
+		if campusMCP := campusStudentMCP(req.ToolParams.McpToolList); campusMCP != nil {
+			log.Errorf("Campus Student MCP unavailable: %s error_type=%T error=%v", mcpServerLogLabel(campusMCP), mcpErr, mcpErr)
+			return adk.ToolsConfig{}, nil, errors.New("[direct]学生校园业务工具暂时不可用，请稍后重试。")
+		}
+		log.Errorf("MCP tools unavailable: server_count=%d error_type=%T", len(req.ToolParams.McpToolList), mcpErr)
+	}
 	if len(mcpToolList) > 0 {
 		toolList = append(toolList, mcpToolList...)
 	}
@@ -51,6 +61,18 @@ func BuildAgentToolsConfig(ctx *gin.Context, req *request.AgentChatParams, chatI
 			Tools: toolList,
 		},
 	}, totalToolIDNameMap, nil
+}
+
+func campusStudentMCP(toolParamsList []*request.MCPToolInfo) *request.MCPToolInfo {
+	if config.GetConfig().BffServer == nil {
+		return nil
+	}
+	for _, info := range toolParamsList {
+		if info != nil && isExactCampusStudentMCPURL(info.URL, config.GetConfig().BffServer.Endpoint) {
+			return info
+		}
+	}
+	return nil
 }
 
 // buildAllToolIDMap 构造所有工具集合

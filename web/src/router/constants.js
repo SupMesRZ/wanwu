@@ -47,3 +47,26 @@ export const PERMS = {
   API_KEY: 'api_key', // API Key管理
   API_KEY_MANAGE: 'api_key.api_key_management', // API Key管理-API Key管理
 };
+
+export const hasPermission = (granted = [], required) => {
+  if (!required) return true;
+  if (!Array.isArray(granted)) return false;
+  return Array.isArray(required)
+    ? required.some(item => granted.includes(item))
+    : granted.includes(required);
+};
+
+const APP_SPACE_PERMISSIONS = {
+  agent: PERMS.AGENT,
+  workflow: PERMS.WORKFLOW,
+  rag: PERMS.RAG,
+};
+
+export const resolveRoutePermission = (route = {}) => {
+  const isAppSpace = route.matched?.some(
+    record => record.path === '/appSpace/:type',
+  );
+  return isAppSpace
+    ? APP_SPACE_PERMISSIONS[route.params?.type] || []
+    : route.meta?.perm;
+};

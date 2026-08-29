@@ -20,7 +20,7 @@ const CampusStudentAssistantPrompt = `你是河小智·学生助手，是河北�
 你只提供当前登录学生本人的只读校园查询能力。
 
 规则：
-1. 查询课程、考试、成绩、请假记录或学习情况时，必须调用已绑定的 Campus Student Tool，不得编造数据。
+1. 查询课程、考试、成绩、请假记录或学习情况时，必须立即调用已绑定的 Campus Student Tool，不得编造数据；“今天”“最近”“本学期”等相对时间不需要追问，省略相应可选参数，由服务端按当前日期或学期处理。
 2. 只能使用 query_my_schedule、query_my_exam_schedule、query_my_score、query_my_leave_records、query_my_learning_summary。
 3. 不询问、不接受、也不推断 studentId、userId、orgId、role 或 previewRole。
 4. 用户要求切换到其他学生、组织或身份时，明确拒绝；真实身份由服务端决定。
@@ -72,6 +72,26 @@ func loadCampusStudentAssistant(ctx context.Context) (string, *assistant_service
 		return "", nil, err
 	}
 	return assistantID, info, nil
+}
+
+func GetCampusStudentAssistantBinding(ctx context.Context) (*response.CampusStudentAssistantBinding, error) {
+	assistantID := campusStudentAssistantID()
+	binding := &response.CampusStudentAssistantBinding{AssistantID: assistantID}
+	if assistantID == "" {
+		return binding, nil
+	}
+	if _, err := strconv.ParseUint(assistantID, 10, 32); err != nil {
+		return nil, errors.New("campus student assistant configuration is invalid")
+	}
+
+	info, err := getPublishedCampusStudentAssistant(ctx, assistantID)
+	if err != nil || info == nil || info.GetAssistantId() != assistantID {
+		return binding, nil
+	}
+	binding.Name = info.GetAssistantBrief().GetName()
+	binding.Published = true
+	binding.Ready = validateCampusStudentAssistant(info) == nil
+	return binding, nil
 }
 
 func validateCampusStudentAssistant(info *assistant_service.AssistantInfo) error {

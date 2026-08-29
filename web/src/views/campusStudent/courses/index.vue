@@ -4,6 +4,14 @@
       <span>STUDENT LEARNING SERVICE</span>
       <h1>我的课程</h1>
       <p>查看只属于当前账号的课程、周课表与考试安排。</p>
+      <el-button
+        class="student-hero__assistant"
+        size="small"
+        icon="el-icon-chat-dot-round"
+        @click="askAssistant"
+      >
+        问河小智
+      </el-button>
     </section>
 
     <section class="student-metrics">
@@ -78,7 +86,9 @@
           {{ selectedCourse.teacher }}
         </el-descriptions-item>
         <el-descriptions-item label="上课时间">
-          {{ selectedCourse.weekdayName }} {{ selectedCourse.startTime }}—{{ selectedCourse.endTime }}
+          {{ selectedCourse.weekdayName }} {{ selectedCourse.startTime }}—{{
+            selectedCourse.endTime
+          }}
         </el-descriptions-item>
         <el-descriptions-item label="上课地点">
           {{ selectedCourse.building }} {{ selectedCourse.room }}
@@ -109,24 +119,54 @@ const CourseTable = {
       return h('div', { class: 'empty-text' }, '暂无课程安排');
     }
     const columns = [
-      h('el-table-column', { props: { prop: 'courseName', label: '课程', minWidth: '150' } }),
-      h('el-table-column', { props: { prop: 'weekdayName', label: '星期', width: '90' } }),
+      h('el-table-column', {
+        props: { prop: 'courseName', label: '课程', minWidth: '150' },
+      }),
+      h('el-table-column', {
+        props: { prop: 'weekdayName', label: '星期', width: '90' },
+      }),
     ];
     if (this.showDate) {
-      columns.push(h('el-table-column', { props: { prop: 'date', label: '日期', width: '110' } }));
+      columns.push(
+        h('el-table-column', {
+          props: { prop: 'date', label: '日期', width: '110' },
+        }),
+      );
     }
     columns.push(
-      h('el-table-column', { props: { label: '时间', minWidth: '150' }, scopedSlots: { default: ({ row }) => `${row.startTime}—${row.endTime}` } }),
-      h('el-table-column', { props: { label: '地点', minWidth: '140' }, scopedSlots: { default: ({ row }) => `${row.building} ${row.room}` } }),
-      h('el-table-column', { props: { prop: 'teacher', label: '教师', width: '100' } }),
+      h('el-table-column', {
+        props: { label: '时间', minWidth: '150' },
+        scopedSlots: {
+          default: ({ row }) => `${row.startTime}—${row.endTime}`,
+        },
+      }),
+      h('el-table-column', {
+        props: { label: '地点', minWidth: '140' },
+        scopedSlots: { default: ({ row }) => `${row.building} ${row.room}` },
+      }),
+      h('el-table-column', {
+        props: { prop: 'teacher', label: '教师', width: '100' },
+      }),
       h('el-table-column', {
         props: { label: '操作', width: '80', fixed: 'right' },
         scopedSlots: {
-          default: ({ row }) => h('el-button', { props: { type: 'text' }, on: { click: () => this.$emit('detail', row) } }, '查看'),
+          default: ({ row }) =>
+            h(
+              'el-button',
+              {
+                props: { type: 'text' },
+                on: { click: () => this.$emit('detail', row) },
+              },
+              '查看',
+            ),
         },
       }),
     );
-    return h('el-table', { props: { data: this.rows }, style: { width: '100%' } }, columns);
+    return h(
+      'el-table',
+      { props: { data: this.rows }, style: { width: '100%' } },
+      columns,
+    );
   },
 };
 
@@ -147,7 +187,10 @@ export default {
   },
   computed: {
     totalCredits() {
-      return this.courses.reduce((total, course) => total + Number(course.credits || 0), 0);
+      return this.courses.reduce(
+        (total, course) => total + Number(course.credits || 0),
+        0,
+      );
     },
     nextCourseText() {
       return this.todayCourses.length
@@ -159,6 +202,12 @@ export default {
     this.loadData();
   },
   methods: {
+    askAssistant() {
+      this.$router.push({
+        path: '/smartAssistant',
+        query: { service: 'schedule' },
+      });
+    },
     async loadData() {
       this.loading = true;
       try {

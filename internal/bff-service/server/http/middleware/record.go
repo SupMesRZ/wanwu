@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"strings"
@@ -90,6 +91,7 @@ func requestBody(ctx *gin.Context) (string, error) {
 		}
 		ctx.Set(gin.BodyBytesKey, body)
 	}
+	ctx.Request.Body = io.NopCloser(bytes.NewReader(body))
 
 	// avoid err: unexpected end of JSON input
 	if strings.TrimSpace(string(body)) == "" {

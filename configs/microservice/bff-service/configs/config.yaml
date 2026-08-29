@@ -195,7 +195,7 @@ assistant-template:
 
 # Published read-only Campus Student Assistant. Configure its numeric assistant ID after publishing.
 campus-student:
-  assistant_id: ""
+  assistant_id: "1"
 
 workflow-template:
   server_mode: local

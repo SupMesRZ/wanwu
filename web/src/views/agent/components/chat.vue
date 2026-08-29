@@ -1,5 +1,12 @@
 <template>
-  <div class="full-content flex">
+  <div
+    :class="[
+      'full-content',
+      'flex',
+      'agent-chat',
+      echo ? 'is-welcome' : 'is-conversation',
+    ]"
+  >
     <el-main class="scroll" style="padding: 20px 0">
       <div class="smart-center" style="padding: 0">
         <!--开场白设置-->
@@ -29,7 +36,7 @@
             @delConversationQA="handleDelConversationQA"
             :defaultUrl="editForm.avatar.path"
           >
-            <template #afterContent="{ responseFiles }">
+            <template #afterContent="{ responseFiles, item, index }">
               <div class="product-card-list">
                 <ProductFileCard
                   v-for="fileItem in responseFiles"
@@ -37,6 +44,7 @@
                   :info="fileItem"
                 />
               </div>
+              <slot name="afterContent" :item="item" :index="index" />
             </template>
           </streamMessageField>
         </div>
@@ -64,7 +72,10 @@
             source="perfectReminder"
             :fileTypeArr="fileTypeArr"
             :type="type"
+            :custom-placeholder="inputPlaceholder"
             :hasHistory="hasHistory"
+            :visible-clear-history="visibleClearHistory"
+            :visible-upload="visibleUpload"
             :maxImageSize="maxImageSize"
             :maxPicNum="maxPicNum"
             :maxFileNum="maxFileNum"
@@ -93,6 +104,9 @@
               {{ $t('app.disclaimer') }}: {{ appUrlInfo.disclaimer }}
             </span>
           </div>
+        </div>
+        <div v-show="echo" class="welcome-after-composer">
+          <slot name="welcome-after-composer" />
         </div>
       </div>
     </el-main>
@@ -163,6 +177,18 @@ export default {
       type: Object,
       default: null,
     },
+    inputPlaceholder: {
+      type: String,
+      default: '',
+    },
+    visibleClearHistory: {
+      type: Boolean,
+      default: true,
+    },
+    visibleUpload: {
+      type: Boolean,
+      default: true,
+    },
     maxImageSize: {
       type: [Number, String],
       required: false,
@@ -215,6 +241,11 @@ export default {
       recommendTimer: null,
       draftReconnectRequested: false,
     };
+  },
+  watch: {
+    echo(value) {
+      this.$emit('conversation-state', !value);
+    },
   },
   methods: {
     getOpenurlStreamHeaders() {

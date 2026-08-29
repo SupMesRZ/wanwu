@@ -12,6 +12,7 @@ import (
 func registerCampusStudent(apiV1 *gin.RouterGroup) {
 	studentOnly := middleware.CheckCampusStudentRole
 	bindExecution := middleware.BindCampusStudentExecutionContext
+	mid.Sub("app.agent").Reg(apiV1, "/campus/student/assistant/binding", http.MethodGet, v1.GetCampusStudentAssistantBinding, "学生助手对象绑定")
 	mid.Sub("wga.wanwu_bot").Reg(apiV1, "/campus/student/summary", http.MethodGet, v1.GetCampusStudentSummary, "学生首页摘要", studentOnly)
 	mid.Sub("wga.wanwu_bot").Reg(apiV1, "/campus/student/courses", http.MethodGet, v1.GetCampusStudentCourses, "我的课程", studentOnly)
 	mid.Sub("wga.wanwu_bot").Reg(apiV1, "/campus/student/courses/today", http.MethodGet, v1.GetCampusStudentTodayCourses, "今日课程", studentOnly)

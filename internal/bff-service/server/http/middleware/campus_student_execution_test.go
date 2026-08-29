@@ -37,8 +37,16 @@ func TestCampusStudentExecutionIdentityAuthorization(t *testing.T) {
 		permission := &response.UserPermission{OrgPermission: response.UserOrgPermission{
 			Roles: roles,
 		}}
+		if strings.HasPrefix(userID, "student-") {
+			permission.OrgPermission.Permissions = []response.Permission{
+				{Perm: "app.agent"},
+				{Perm: "app.workflow"},
+			}
+		}
 		if strings.Contains(userID, "admin") {
 			permission.OrgPermission.IsAdmin = true
+		}
+		if strings.Contains(userID, "system") {
 			permission.OrgPermission.IsSystem = true
 		}
 		return permission, nil
@@ -54,7 +62,7 @@ func TestCampusStudentExecutionIdentityAuthorization(t *testing.T) {
 		ctx.JSON(http.StatusOK, identity)
 	})
 
-	t.Run("student A and B remain isolated", func(t *testing.T) {
+	t.Run("students with platform permissions remain isolated", func(t *testing.T) {
 		a := executeCampusIdentityRequest(t, router, "student-a", "org-a", nil)
 		b := executeCampusIdentityRequest(t, router, "student-b", "org-a", nil)
 		if a.Code != http.StatusOK || b.Code != http.StatusOK {
@@ -82,7 +90,7 @@ func TestCampusStudentExecutionIdentityAuthorization(t *testing.T) {
 		}
 	})
 
-	for _, userID := range []string{"teacher", "academic", "admin-teacher", "conflict"} {
+	for _, userID := range []string{"teacher", "academic", "admin", "system", "admin-teacher", "conflict"} {
 		t.Run(userID+" is forbidden", func(t *testing.T) {
 			resp := executeCampusIdentityRequest(t, router, userID, "org-a", nil)
 			if resp.Code != http.StatusForbidden {

@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import { PERMS } from './constants';
+import { PERMS, hasPermission as hasGrantedPermission } from './constants';
 import { basePath } from '@/utils/config';
 import { PROMPT, MCP, TOOL } from '@/views/tool/constants';
 
@@ -113,6 +113,11 @@ const constantRoutes = [
         },
       },
       {
+        path: '/campus/student/assistant/preview/:id',
+        component: resolve => require(['@/views/agent'], resolve),
+        meta: { perm: [PERMS.AGENT] },
+      },
+      {
         path: '/campus/teacher/teaching',
         component: resolve =>
           require(['@/views/campusPortal/index.vue'], resolve),
@@ -149,7 +154,7 @@ const constantRoutes = [
         path: '/agentCenter',
         component: resolve =>
           require(['@/views/agentCenter/index.vue'], resolve),
-        meta: { perm: [PERMS.ADMIN_CENTER, PERMS.AGENT] },
+        meta: { perm: [PERMS.AGENT] },
       },
       {
         path: '/campusWorkflow',
@@ -493,13 +498,8 @@ const constantRoutes = [
 ];
 
 // 判断是否有权限
-const hasPermission = (perm, route) => {
-  if (!Array.isArray(perm)) return false;
-  if (route.meta?.perm) {
-    return route.meta.perm.some(role => perm.includes(role));
-  } else {
-    return true;
-  }
+const hasRoutePermission = (perm, route) => {
+  return hasGrantedPermission(perm, route.meta?.perm);
 };
 // 把有权限的路由重新组合
 const filterAsyncRoutes = (routes, perm) => {
@@ -507,7 +507,7 @@ const filterAsyncRoutes = (routes, perm) => {
 
   routes.forEach(route => {
     const tmp = { ...route };
-    if (hasPermission(perm, tmp)) {
+    if (hasRoutePermission(perm, tmp)) {
       if (tmp.children) {
         tmp.children = filterAsyncRoutes(tmp.children, perm);
         if (tmp.children.length && !tmp.redirect)

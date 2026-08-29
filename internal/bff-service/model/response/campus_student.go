@@ -9,6 +9,13 @@ type CampusStudentAssistantInfo struct {
 	RecommendQuestion []string       `json:"recommendQuestion"`
 }
 
+type CampusStudentAssistantBinding struct {
+	AssistantID string `json:"assistantId"`
+	Name        string `json:"name"`
+	Published   bool   `json:"published"`
+	Ready       bool   `json:"ready"`
+}
+
 type CampusStudentProfile struct {
 	StudentNo string `json:"studentNo"`
 	Name      string `json:"name"`

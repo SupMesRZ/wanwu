@@ -12,6 +12,11 @@ func GetCampusStudentAssistant(ctx *gin.Context) {
 	gin_util.Response(ctx, resp, err)
 }
 
+func GetCampusStudentAssistantBinding(ctx *gin.Context) {
+	resp, err := service.GetCampusStudentAssistantBinding(ctx.Request.Context())
+	gin_util.Response(ctx, resp, err)
+}
+
 func CreateCampusStudentAssistantConversation(ctx *gin.Context) {
 	var req request.CampusStudentAssistantConversationReq
 	if !gin_util.Bind(ctx, &req) {

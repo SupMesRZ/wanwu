@@ -45,12 +45,17 @@ log/
 !internal/app-service/client/orm/public_opinion_event_test.go
 !internal/app-service/server/grpc/app/public_opinion_test.go
 !internal/agent-service/pkg/execution-context/context_test.go
+!internal/agent-service/model/response/agent_chat_test.go
 !internal/agent-service/service/agent-tool/mcp_execution_auth_test.go
 !internal/assistant-service/server/grpc/assistant/execution_auth_test.go
 !internal/bff-service/server/http/middleware/campus_student_execution_test.go
+!internal/bff-service/server/http/middleware/record_test.go
+!internal/bff-service/service/campus_student_agent_test.go
+!pkg/sse-util/sse-connector/sse_connector_test.go
 !internal/bff-service/service/assistant_execution_auth_test.go
 !internal/bff-service/service/campus_student_mcp_test.go
 !internal/bff-service/service/campus_student_test.go
+!pkg/campusstudent/tools_test.go
 !pkg/http-client/execution_auth_log_test.go
 bin/amd64/*
 bin/arm64/*

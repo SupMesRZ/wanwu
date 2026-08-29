@@ -39,8 +39,7 @@ func createMCPClient(ctx context.Context, mcpToolInfo *request.MCPToolInfo) (cli
 	var transportType = mcpToolInfo.Transport
 	url, headers, err := buildMCPConnectionParams(ctx, mcpToolInfo)
 	if err != nil {
-		log.Errorf("failed to merge mcp params: %v", err)
-		return nil, fmt.Errorf("failed to merge mcp params: %w", err)
+		return nil, fmt.Errorf("stage=client_configuration: %w", err)
 	}
 	if headers == nil {
 		headers = make(map[string]string)
@@ -57,7 +56,7 @@ func createMCPClient(ctx context.Context, mcpToolInfo *request.MCPToolInfo) (cli
 			mcpClient, err = client.NewStreamableHttpClient(url)
 		}
 		if err != nil {
-			return nil, fmt.Errorf("failed to create StreamableHTTP MCP client: %w", err)
+			return nil, fmt.Errorf("stage=streamable_transport_creation: %w", err)
 		}
 	case constant.MCPTransportSSE:
 		// 默认使用 SSE 客户端
@@ -67,10 +66,10 @@ func createMCPClient(ctx context.Context, mcpToolInfo *request.MCPToolInfo) (cli
 			mcpClient, err = client.NewSSEMCPClient(url)
 		}
 		if err != nil {
-			return nil, fmt.Errorf("failed to create SSE MCP client: %w", err)
+			return nil, fmt.Errorf("stage=sse_transport_creation: %w", err)
 		}
 	default:
-		return nil, fmt.Errorf("unsupported transport type: %s", transportType)
+		return nil, fmt.Errorf("stage=transport_creation: unsupported transport type: %s", transportType)
 	}
 
 	retryMcpClient := mcp_client.NewDefaultRetryMcpClient(mcpClient)
@@ -79,7 +78,7 @@ func createMCPClient(ctx context.Context, mcpToolInfo *request.MCPToolInfo) (cli
 	err = retryMcpClient.Start(ctx)
 	if err != nil {
 		_ = retryMcpClient.Close()
-		return nil, fmt.Errorf("failed to start MCP client: %w", err)
+		return nil, fmt.Errorf("stage=transport_start: %w", err)
 	}
 
 	// 初始化 MCP 客户端
@@ -97,7 +96,7 @@ func createMCPClient(ctx context.Context, mcpToolInfo *request.MCPToolInfo) (cli
 	_, err = retryMcpClient.Initialize(initCtx, initRequest)
 	if err != nil {
 		_ = retryMcpClient.Close()
-		return nil, fmt.Errorf("failed to initialize MCP client: %w", err)
+		return nil, fmt.Errorf("stage=initialize: %w", err)
 	}
 
 	log.Infof("MCP client (%s) initialized successfully", transportType)
@@ -118,7 +117,7 @@ func GetToolsFromMCPServers(ctx context.Context, toolParamsList []*request.MCPTo
 
 		mcpClient, err := createMCPClient(ctx, serverInfo)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create MCP client for %s: %v", label, err)
+			return nil, nil, fmt.Errorf("failed to create MCP client for %s: %w", label, err)
 		}
 		// 注意:不要在这里关闭客户端,因为工具在后续使用时还需要这个连接
 		// defer mcpClient.Close()
@@ -128,10 +127,29 @@ func GetToolsFromMCPServers(ctx context.Context, toolParamsList []*request.MCPTo
 			ToolNameList: serverInfo.ToolNameList,
 		})
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get mcp tools from %s: %v", label, err)
+			_ = mcpClient.Close()
+			stage := "tools_list"
+			if strings.Contains(err.Error(), "input schema") {
+				stage = "tool_schema"
+			}
+			return nil, nil, fmt.Errorf("stage=%s server=%s: %w", stage, label, err)
 		}
 
-		log.Infof("Loaded %d tools from %s", len(tools), label)
+		toolNames := make([]string, 0, len(tools))
+		for _, loadedTool := range tools {
+			info, err := loadedTool.Info(ctx)
+			if err != nil {
+				_ = mcpClient.Close()
+				return nil, nil, fmt.Errorf("stage=tool_schema server=%s: %w", label, err)
+			}
+			toolNames = append(toolNames, info.Name)
+		}
+		campusEndpoint := config.GetConfig().BffServer != nil && isExactCampusStudentMCPURL(serverInfo.URL, config.GetConfig().BffServer.Endpoint)
+		if campusEndpoint && !sameToolNames(toolNames, serverInfo.ToolNameList) {
+			_ = mcpClient.Close()
+			return nil, nil, fmt.Errorf("stage=tool_name_filter server=%s: requested=%v loaded=%v", label, serverInfo.ToolNameList, toolNames)
+		}
+		log.Infof("Loaded %d tools from %s tool_names=%v", len(tools), label, toolNames)
 		if len(serverInfo.ToolNameList) > 0 {
 			//mcp 的方法名先不做替换，因为mcp的函数名基本都是符合规则一般不会有特殊字符
 			for _, toolName := range serverInfo.ToolNameList {
@@ -146,6 +164,23 @@ func GetToolsFromMCPServers(ctx context.Context, toolParamsList []*request.MCPTo
 	}
 
 	return allTools, toolMap, nil
+}
+
+func sameToolNames(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	wanted := make(map[string]int, len(want))
+	for _, name := range want {
+		wanted[name]++
+	}
+	for _, name := range got {
+		if wanted[name] == 0 {
+			return false
+		}
+		wanted[name]--
+	}
+	return true
 }
 
 func buildMCPConnectionParams(ctx context.Context, info *request.MCPToolInfo) (string, map[string]string, error) {
@@ -233,5 +268,13 @@ func withoutIdentityHeaders(headers map[string]string) map[string]string {
 }
 
 func mcpServerLogLabel(info *request.MCPToolInfo) string {
-	return fmt.Sprintf("transport=%s tools=%v", info.Transport, info.ToolNameList)
+	kind := "mcp"
+	if config.GetConfig().BffServer != nil && isExactCampusStudentMCPURL(info.URL, config.GetConfig().BffServer.Endpoint) {
+		kind = "campus_student"
+	}
+	endpoint := "invalid"
+	if parsed, err := url.Parse(info.URL); err == nil && parsed.Scheme != "" && parsed.Host != "" {
+		endpoint = parsed.Scheme + "://" + parsed.Host + parsed.EscapedPath()
+	}
+	return fmt.Sprintf("id=%s transport=%s endpoint=%s tools=%v", kind, info.Transport, endpoint, info.ToolNameList)
 }

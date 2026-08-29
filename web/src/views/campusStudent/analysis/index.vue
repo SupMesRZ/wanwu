@@ -4,6 +4,14 @@
       <span>LEARNING INSIGHT</span>
       <h1>学习分析</h1>
       <p>基于当前账号的课程成绩查看学期概览与学习趋势。</p>
+      <el-button
+        class="student-hero__assistant"
+        size="small"
+        icon="el-icon-chat-dot-round"
+        @click="askAssistant"
+      >
+        问河小智
+      </el-button>
     </section>
 
     <section class="student-metrics">
@@ -77,7 +85,8 @@
         <div class="suggestions">
           <h3>学习建议</h3>
           <p v-for="item in analysis.suggestions || []" :key="item">
-            <i class="el-icon-circle-check"></i>{{ item }}
+            <i class="el-icon-circle-check"></i>
+            {{ item }}
           </p>
         </div>
       </aside>
@@ -106,6 +115,12 @@ export default {
     this.loadData();
   },
   methods: {
+    askAssistant() {
+      this.$router.push({
+        path: '/smartAssistant',
+        query: { service: 'learning' },
+      });
+    },
     async loadData() {
       this.loading = true;
       try {

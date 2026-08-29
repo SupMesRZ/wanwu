@@ -1,7 +1,11 @@
 import router from './index';
 import { store } from '@/store/index';
 import { fetchPermFirPath } from '@/utils/util';
-import { PERMS as menuPerms } from './constants';
+import {
+  PERMS as menuPerms,
+  hasPermission,
+  resolveRoutePermission,
+} from './constants';
 import { basePath } from '@/utils/config';
 import { canAccessCampusRoles } from '@/utils/campusRole';
 
@@ -17,17 +21,8 @@ const white_list = [
 export const PERMS = menuPerms;
 
 export const checkPerm = perm => {
-  // 不传权限点，表示不需要权限控制，返回 true
-  if (!perm) return true;
-  // 传权限点，判断是否在权限列表，在返回 true，否则 false
   const permission = store.getters['user/permission'];
-  const orgPermission = permission.orgPermission;
-  if (orgPermission && orgPermission.length) {
-    return Array.isArray(perm)
-      ? perm.some(item => orgPermission.includes(item))
-      : orgPermission.includes(perm);
-  }
-  return false;
+  return hasPermission(permission.orgPermission, perm);
 };
 
 export const formatPerms = perms => {
@@ -47,7 +42,7 @@ router.beforeEach(async (to, from, next) => {
       const { path } = fetchPermFirPath();
       next({ path });
     } else if (
-      !checkPerm(to.meta?.perm) ||
+      !checkPerm(resolveRoutePermission(to)) ||
       !canAccessCampusRoles(
         to.meta?.campusRoles,
         store.getters['user/campusRole'],
