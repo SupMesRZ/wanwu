@@ -11,8 +11,8 @@ import (
 
 var getCampusStudentPermission = service.GetUserPermission
 
-// CheckCampusStudentRole requires one unambiguous actual IAM campus role.
-// previewRole is frontend-only and cannot reach this authorization boundary.
+// CheckCampusStudentRole allows administrators to preview the role while
+// regular users still require one unambiguous actual IAM campus role.
 func CheckCampusStudentRole(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -33,8 +33,6 @@ func CheckCampusStudentRole(ctx *gin.Context) {
 		return
 	}
 	if permission.OrgPermission.IsAdmin || permission.OrgPermission.IsSystem {
-		gin_util.ResponseErrWithStatus(ctx, http.StatusForbidden, errors.New("campus student role required"))
-		ctx.Abort()
 		return
 	}
 	role, status := service.ResolveActualCampusRole(permission.OrgPermission.Roles)

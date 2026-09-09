@@ -6,6 +6,7 @@ import (
 	"os"
 
 	oauth2_util "github.com/UnicomAI/wanwu/internal/bff-service/pkg/oauth2-util"
+	"github.com/UnicomAI/wanwu/pkg/db"
 	"github.com/UnicomAI/wanwu/pkg/i18n"
 	"github.com/UnicomAI/wanwu/pkg/log"
 	"github.com/UnicomAI/wanwu/pkg/minio"
@@ -21,6 +22,7 @@ var (
 type Config struct {
 	Server            ServerConfig               `json:"server" mapstructure:"server"`
 	Log               LogConfig                  `json:"log" mapstructure:"log"`
+	DB                db.Config                  `json:"db" mapstructure:"db"`
 	JWT               JWTConfig                  `json:"jwt" mapstructure:"jwt"`
 	OAuth             OAuthConfig                `json:"oauth" mapstructure:"oauth"`
 	Decrypt           DecryptPasswd              `json:"decrypt-passwd" mapstructure:"decrypt-passwd"`
@@ -41,6 +43,7 @@ type Config struct {
 	SkillCreatorPath  SkillCreatorPathConfig     `json:"skill-creator-path" mapstructure:"skill-creator-path"`
 	RecommendModels   RecommendModelConfig       `json:"recommend_models" mapstructure:"recommend_models"`
 	CampusStudent     CampusStudentConfig        `json:"campus-student" mapstructure:"campus-student"`
+	CampusBusiness    CampusBusinessConfig       `json:"campus-business" mapstructure:"campus-business"`
 	// middleware
 	Minio minio.Config `json:"minio" mapstructure:"minio"`
 	Redis redis.Config `json:"redis" mapstructure:"redis"`
@@ -64,6 +67,12 @@ type Config struct {
 
 type CampusStudentConfig struct {
 	AssistantID string `json:"assistant_id" mapstructure:"assistant_id"`
+}
+
+type CampusBusinessConfig struct {
+	TeacherAssistantID  string `json:"teacher_assistant_id" mapstructure:"teacher_assistant_id"`
+	AcademicAssistantID string `json:"academic_assistant_id" mapstructure:"academic_assistant_id"`
+	TeacherReviewOrgID  string `json:"teacher_review_org_id" mapstructure:"teacher_review_org_id"`
 }
 
 type ServerConfig struct {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -14,6 +15,8 @@ import (
 
 	"github.com/UnicomAI/wanwu/internal/agent-service/model/request"
 	"github.com/UnicomAI/wanwu/internal/agent-service/model/response"
+	agent_config "github.com/UnicomAI/wanwu/internal/agent-service/pkg/config"
+	execution_context "github.com/UnicomAI/wanwu/internal/agent-service/pkg/execution-context"
 	agent_http_client "github.com/UnicomAI/wanwu/internal/agent-service/pkg/http"
 	"github.com/UnicomAI/wanwu/internal/agent-service/pkg/util"
 	http_client "github.com/UnicomAI/wanwu/pkg/http-client"
@@ -72,8 +75,10 @@ func GetToolsFromOpenAPISchema(ctx context.Context, pluginToolList []*request.Pl
 
 		info := wrapper.APISchema.Info
 		var apiTitle = ""
+		var apiDescription = ""
 		if info != nil {
 			apiTitle = info.Title
+			apiDescription = info.Description
 		}
 
 		for path, pathItem := range wrapper.APISchema.Paths {
@@ -121,7 +126,7 @@ func GetToolsFromOpenAPISchema(ctx context.Context, pluginToolList []*request.Pl
 				}
 
 				contentType := getRequestContentType(operation)
-				handler := createHTTPHandler(serverURL, path, method, wrapper.APIAuth, contentType, toolName)
+				handler := createHTTPHandler(serverURL, path, method, wrapper.APIAuth, contentType, toolName, apiDescription)
 
 				tools := &openAPITool{
 					info:    einoTool,
@@ -182,10 +187,16 @@ func getRequestContentType(operation *openapi3.Operation) string {
 	return "application/json"
 }
 
-func createHTTPHandler(serverURL, path, method string, auth *openapi3_util.Auth, contentType, toolName string) func(ctx context.Context, arguments string) (string, error) {
+func createHTTPHandler(serverURL, path, method string, auth *openapi3_util.Auth, contentType, toolName, workflowCode string) func(ctx context.Context, arguments string) (string, error) {
 	return func(ctx context.Context, arguments string) (string, error) {
 		start := time.Now().UnixMilli()
 		requestURL := serverURL + path
+		executionHeaders := map[string]string(nil)
+		if routedURL, routedBody, headers, ok, err := routeCampusWorkflow(ctx, workflowCode, arguments); err != nil {
+			return "", err
+		} else if ok {
+			requestURL, arguments, executionHeaders = routedURL, routedBody, headers
+		}
 
 		var body io.Reader
 		var actualContentType string
@@ -284,6 +295,9 @@ func createHTTPHandler(serverURL, path, method string, auth *openapi3_util.Auth,
 		if auth != nil && auth.Type == "apiKey" && auth.In == "header" {
 			req.Header.Set(auth.Name, auth.Value)
 		}
+		for key, value := range executionHeaders {
+			req.Header.Set(key, value)
+		}
 		if body != nil {
 			req.Header.Set("Content-Type", actualContentType)
 		}
@@ -297,6 +311,44 @@ func createHTTPHandler(serverURL, path, method string, auth *openapi3_util.Auth,
 
 		return respBody, nil
 	}
+}
+
+var campusWorkflowCodes = map[string]struct{}{
+	"campus_workflow_identity_probe":      {},
+	"teacher_course_adjustment":           {},
+	"academic_course_adjustment_approval": {},
+	"student_leave_full_process":          {},
+}
+
+func routeCampusWorkflow(ctx context.Context, workflowCode, arguments string) (string, string, map[string]string, bool, error) {
+	if _, ok := campusWorkflowCodes[workflowCode]; !ok {
+		return "", arguments, nil, false, nil
+	}
+	authorization, orgID, ok := execution_context.FromContext(ctx)
+	if !ok {
+		return "", "", nil, true, errors.New("campus workflow execution identity unavailable")
+	}
+	if agent_config.GetConfig().BffServer == nil {
+		return "", "", nil, true, errors.New("bff server is not configured")
+	}
+	bffBase, err := campusMCPBFFBaseURL(agent_config.GetConfig().BffServer.Endpoint)
+	if err != nil {
+		return "", "", nil, true, err
+	}
+	input := map[string]any{}
+	if arguments != "" {
+		if err := json.Unmarshal([]byte(arguments), &input); err != nil {
+			return "", "", nil, true, fmt.Errorf("failed to parse campus workflow arguments: %w", err)
+		}
+	}
+	body, err := json.Marshal(map[string]any{"workflowCode": workflowCode, "input": input})
+	if err != nil {
+		return "", "", nil, true, err
+	}
+	return strings.TrimRight(bffBase, "/") + "/v1/campus/workflow/run", string(body), map[string]string{
+		"Authorization": authorization,
+		"X-Org-Id":      orgID,
+	}, true, nil
 }
 
 func buildResult(resp *http.Response, err error) (string, error) {

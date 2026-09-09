@@ -1,15 +1,19 @@
 <template>
   <div class="smart-assistant-page">
     <el-alert
-      v-if="isStudentPreview"
-      title="当前为学生界面预览模式，个人校园智能查询仅对真实学生账号开放。"
+      v-if="isRolePreview"
+      :title="`当前为${roleProfile.label}界面管理员预览模式，使用演示身份和模拟校园数据。`"
       type="warning"
       :closable="false"
       show-icon
       class="preview-alert"
     />
 
-    <component :is="assistantComponent" v-if="roleProfile" ref="campusAgent">
+    <CampusStudentAssistant
+      v-if="roleProfile"
+      ref="campusAgent"
+      :role="roleProfile.key"
+    >
       <template #header-title>
         <div class="assistant-title">
           <span :class="['assistant-logo', { image: platformLogo }]">
@@ -80,7 +84,7 @@
           </div>
         </div>
       </template>
-    </component>
+    </CampusStudentAssistant>
 
     <div v-else class="role-empty">
       <i class="el-icon-user"></i>
@@ -124,7 +128,6 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
-import CampusAgent from '@/views/generalAgent/index.vue';
 import CampusStudentAssistant from '@/views/campusStudent/assistant/index.vue';
 import { avatarSrc } from '@/utils/util';
 import {
@@ -157,7 +160,7 @@ const servicePrompts = {
 
 export default {
   name: 'SmartAssistant',
-  components: { CampusAgent, CampusStudentAssistant },
+  components: { CampusStudentAssistant },
   data() {
     return {
       demoVisible: false,
@@ -285,15 +288,10 @@ export default {
     roleProfile() {
       return getCampusRoleProfile(this.campusRole.effectiveRole);
     },
-    assistantComponent() {
-      return this.campusRole.actualRole === 'student'
-        ? 'CampusStudentAssistant'
-        : 'CampusAgent';
-    },
-    isStudentPreview() {
+    isRolePreview() {
       return (
-        this.campusRole.previewRole === 'student' &&
-        this.campusRole.actualRole !== 'student'
+        this.campusRole.previewRole &&
+        this.campusRole.actualRole !== this.campusRole.previewRole
       );
     },
     roleModules() {

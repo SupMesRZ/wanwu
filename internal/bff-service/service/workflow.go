@@ -8,6 +8,7 @@ import (
 	"io"
 	net_url "net/url"
 	"sort"
+	"strings"
 	"time"
 
 	trace_util "github.com/UnicomAI/wanwu/pkg/trace-util"
@@ -20,6 +21,7 @@ import (
 	"github.com/UnicomAI/wanwu/pkg/constant"
 	gin_util "github.com/UnicomAI/wanwu/pkg/gin-util"
 	grpc_util "github.com/UnicomAI/wanwu/pkg/grpc-util"
+	jwt_util "github.com/UnicomAI/wanwu/pkg/jwt-util"
 	mp "github.com/UnicomAI/wanwu/pkg/model-provider"
 	mp_common "github.com/UnicomAI/wanwu/pkg/model-provider/mp-common"
 	openapi3_util "github.com/UnicomAI/wanwu/pkg/openapi3-util"
@@ -252,6 +254,10 @@ func ImportWorkflow(ctx *gin.Context, orgID, appType string) (*response.CozeWork
 	if rawData.Name == "" || rawData.Desc == "" {
 		return nil, grpc_util.ErrorStatusWithKey(errs.Code_BFFGeneral, "bff_workflow_import_file", "name or desc is empty")
 	}
+	return importWorkflowData(ctx, orgID, appType, rawData)
+}
+
+func importWorkflowData(ctx *gin.Context, orgID, appType string, rawData workflowImportData) (*response.CozeWorkflowIDData, error) {
 	switch appType {
 	case constant.AppTypeChatflow:
 		appType = "3"
@@ -693,15 +699,18 @@ type workflowImportData struct {
 }
 
 func workflowHttpReqHeader(ctx *gin.Context) map[string]string {
-	// X-Org-Id 优先从 gin.Context 读取（中间件已设置），如果没有则从 header 读取
-	orgID := ctx.GetString(gin_util.X_ORG_ID)
-	if orgID == "" {
-		orgID = ctx.GetHeader(gin_util.X_ORG_ID)
+	userID := ctx.GetString(gin_util.USER_ID)
+	if userID == "" {
+		if token := strings.TrimPrefix(ctx.GetHeader("Authorization"), "Bearer "); token != "" {
+			if claims, err := jwt_util.ParseToken(token); err == nil {
+				userID = claims.UserID
+			}
+		}
 	}
 	return map[string]string{
 		"Authorization": ctx.GetHeader("Authorization"),
-		"X-Org-Id":      orgID,
-		"X-User-Id":     ctx.GetString(gin_util.USER_ID),
+		"X-Org-Id":      ctx.GetString(gin_util.X_ORG_ID),
+		"X-User-Id":     userID,
 		"Content-Type":  "application/json",
 	}
 }

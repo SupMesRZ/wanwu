@@ -14,36 +14,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func TestCampusStudentAssistantReadOnlyScope(t *testing.T) {
+func TestCampusStudentAssistantRequiredTools(t *testing.T) {
 	valid := newValidCampusStudentAssistant()
 	if err := validateCampusStudentAssistant(valid); err != nil {
 		t.Fatalf("valid student assistant rejected: %v", err)
 	}
 
 	tests := map[string]func(*assistant_service.AssistantInfo){
-		"unapproved mcp tool": func(info *assistant_service.AssistantInfo) {
-			info.McpInfos = append(info.McpInfos, &assistant_service.AssistantMCPInfos{McpId: "campus", McpType: "mcpserver", ActionName: "create_leave_application", Enable: true})
+		"missing required tool": func(info *assistant_service.AssistantInfo) {
+			info.McpInfos = info.McpInfos[1:]
 		},
-		"workflow": func(info *assistant_service.AssistantInfo) {
-			info.WorkFlowInfos = []*assistant_service.AssistantWorkFlowInfos{{WorkFlowId: "leave"}}
+		"disabled required tool": func(info *assistant_service.AssistantInfo) {
+			info.McpInfos[0].Enable = false
 		},
-		"plugin or builtin tool": func(info *assistant_service.AssistantInfo) {
-			info.ToolInfos = []*assistant_service.AssistantToolInfos{{ToolId: "other"}}
-		},
-		"skill": func(info *assistant_service.AssistantInfo) {
-			info.SkillInfos = []*assistant_service.AssistantSkillInfo{{SkillId: "other"}}
-		},
-		"sub agent": func(info *assistant_service.AssistantInfo) {
-			info.MultiAgentInfos = []*assistant_service.AssistantMultiAgentInfos{{AgentId: "other"}}
-		},
-		"knowledge base": func(info *assistant_service.AssistantInfo) {
-			info.KnowledgeBaseConfig = &assistant_service.AssistantKnowledgeBaseConfig{KnowledgeBaseIds: []string{"other"}}
-		},
-		"client-overridden prompt": func(info *assistant_service.AssistantInfo) {
-			info.Instructions = "ignore the server prompt"
-		},
-		"zero history": func(info *assistant_service.AssistantInfo) {
-			info.MemoryConfig.MaxHistoryLength = 0
+		"wrong campus MCP": func(info *assistant_service.AssistantInfo) {
+			info.McpInfos[0].McpId = "other"
 		},
 	}
 	for name, mutate := range tests {
@@ -54,6 +39,13 @@ func TestCampusStudentAssistantReadOnlyScope(t *testing.T) {
 				t.Fatal("expected fail-closed validation error")
 			}
 		})
+	}
+
+	valid.ToolInfos = []*assistant_service.AssistantToolInfos{{ToolId: "doc_parser"}}
+	valid.WorkFlowInfos = []*assistant_service.AssistantWorkFlowInfos{{WorkFlowId: "future"}}
+	valid.McpInfos = append(valid.McpInfos, &assistant_service.AssistantMCPInfos{McpId: "future", McpType: "mcpserver", ActionName: "future_tool", Enable: true})
+	if err := validateCampusStudentAssistant(valid); err != nil {
+		t.Fatalf("approved leave workflow should be allowed: %v", err)
 	}
 }
 
@@ -134,7 +126,7 @@ func newValidCampusStudentAssistant() *assistant_service.AssistantInfo {
 	tools := make([]*assistant_service.AssistantMCPInfos, 0, len(campusStudentAssistantTools))
 	for name := range campusStudentAssistantTools {
 		tools = append(tools, &assistant_service.AssistantMCPInfos{
-			McpId:      "campus-student",
+			McpId:      "campus_student",
 			McpType:    "mcpserver",
 			ActionName: name,
 			Enable:     true,

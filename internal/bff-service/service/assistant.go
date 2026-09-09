@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	err_code "github.com/UnicomAI/wanwu/api/proto/err-code"
 	mcp_service "github.com/UnicomAI/wanwu/api/proto/mcp-service"
 	safety_service "github.com/UnicomAI/wanwu/api/proto/safety-service"
+	"github.com/UnicomAI/wanwu/internal/bff-service/config"
 	"github.com/UnicomAI/wanwu/internal/bff-service/model/request"
 	"github.com/UnicomAI/wanwu/internal/bff-service/model/response"
 	bff_util "github.com/UnicomAI/wanwu/internal/bff-service/pkg/util"
@@ -191,6 +193,12 @@ func AssistantCopy(ctx *gin.Context, userId, orgId string, req request.Assistant
 }
 
 func AssistantWorkFlowCreate(ctx *gin.Context, userId, orgId string, req request.AssistantWorkFlowAddRequest) error {
+	if req.AssistantId == strings.TrimSpace(config.Cfg().CampusStudent.AssistantID) {
+		approvedID, err := campusManagedWorkflowID(ctx, orgId, campusWorkflowLeaveCode)
+		if err != nil || req.WorkFlowId != approvedID {
+			return fmt.Errorf("campus student assistant only allows student_leave_full_process")
+		}
+	}
 	_, err := assistant.AssistantWorkFlowCreate(ctx.Request.Context(), &assistant_service.AssistantWorkFlowCreateReq{
 		AssistantId: req.AssistantId,
 		WorkFlowId:  req.WorkFlowId,

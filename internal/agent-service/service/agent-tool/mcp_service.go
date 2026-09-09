@@ -24,7 +24,11 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 )
 
-const campusStudentMCPPath = "/v1/campus/student/mcp"
+var campusMCPPaths = map[string]string{
+	"campus_student":        "/v1/campus/student/mcp",
+	"campus_teacher":        "/v1/campus/teacher/mcp",
+	"campus_academic_admin": "/v1/campus/academic/mcp",
+}
 
 type MCPServerInfo struct {
 	Transport    string   `json:"transport"`
@@ -144,7 +148,7 @@ func GetToolsFromMCPServers(ctx context.Context, toolParamsList []*request.MCPTo
 			}
 			toolNames = append(toolNames, info.Name)
 		}
-		campusEndpoint := config.GetConfig().BffServer != nil && isExactCampusStudentMCPURL(serverInfo.URL, config.GetConfig().BffServer.Endpoint)
+		campusEndpoint := config.GetConfig().BffServer != nil && campusMCPKindForURL(serverInfo.URL, config.GetConfig().BffServer.Endpoint) != ""
 		if campusEndpoint && !sameToolNames(toolNames, serverInfo.ToolNameList) {
 			_ = mcpClient.Close()
 			return nil, nil, fmt.Errorf("stage=tool_name_filter server=%s: requested=%v loaded=%v", label, serverInfo.ToolNameList, toolNames)
@@ -190,7 +194,7 @@ func buildMCPConnectionParams(ctx context.Context, info *request.MCPToolInfo) (s
 	if config.GetConfig().BffServer != nil {
 		bffEndpoint = config.GetConfig().BffServer.Endpoint
 	}
-	campusEndpoint := isExactCampusStudentMCPURL(info.URL, bffEndpoint)
+	campusEndpoint := campusMCPKindForURL(info.URL, bffEndpoint) != ""
 	if campusEndpoint {
 		apiAuth = nil
 		headers = withoutIdentityHeaders(headers)
@@ -213,11 +217,24 @@ func buildMCPConnectionParams(ctx context.Context, info *request.MCPToolInfo) (s
 }
 
 func isExactCampusStudentMCPURL(target, bffEndpoint string) bool {
+	return isExactCampusMCPURL(target, bffEndpoint, campusMCPPaths["campus_student"])
+}
+
+func campusMCPKindForURL(target, bffEndpoint string) string {
+	for kind, path := range campusMCPPaths {
+		if isExactCampusMCPURL(target, bffEndpoint, path) {
+			return kind
+		}
+	}
+	return ""
+}
+
+func isExactCampusMCPURL(target, bffEndpoint, path string) bool {
 	allowedBase, err := campusMCPBFFBaseURL(bffEndpoint)
 	if err != nil {
 		return false
 	}
-	allowed, err := url.JoinPath(allowedBase, campusStudentMCPPath)
+	allowed, err := url.JoinPath(allowedBase, path)
 	if err != nil {
 		return false
 	}
@@ -269,8 +286,10 @@ func withoutIdentityHeaders(headers map[string]string) map[string]string {
 
 func mcpServerLogLabel(info *request.MCPToolInfo) string {
 	kind := "mcp"
-	if config.GetConfig().BffServer != nil && isExactCampusStudentMCPURL(info.URL, config.GetConfig().BffServer.Endpoint) {
-		kind = "campus_student"
+	if config.GetConfig().BffServer != nil {
+		if campusKind := campusMCPKindForURL(info.URL, config.GetConfig().BffServer.Endpoint); campusKind != "" {
+			kind = campusKind
+		}
 	}
 	endpoint := "invalid"
 	if parsed, err := url.Parse(info.URL); err == nil && parsed.Scheme != "" && parsed.Host != "" {

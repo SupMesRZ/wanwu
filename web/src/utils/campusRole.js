@@ -38,12 +38,18 @@ export const CAMPUS_ROLES = {
     assistantName: '河小智教师助手',
     salutation: '老师',
     subtitle: '你的教学与课程管理智能伙伴',
-    welcome: '我可以帮你查询教学安排、智能备课和分析学情反馈。',
-    examples: ['我今天有哪些课？', '根据这份资料生成教案', '分析本班高频错题'],
+    welcome: '我可以帮你查询教学安排、办理调课，并作为辅导员审批学生请假。',
+    examples: [
+      '我明天有什么课？',
+      '我这周有监考吗？',
+      '周五下午有没有空教室？',
+      '查询待审批的学生请假申请',
+    ],
     abilities: [
       { icon: 'el-icon-notebook-2', text: '我的教学' },
       { icon: 'el-icon-document', text: 'AI 智能备课' },
       { icon: 'el-icon-data-line', text: '学情与反馈' },
+      { icon: 'el-icon-circle-check', text: '学生请假审批' },
     ],
   },
   academic_admin: {
@@ -52,11 +58,11 @@ export const CAMPUS_ROLES = {
     assistantName: '河小智教务助手',
     salutation: '',
     subtitle: '校园教学运行与辅助决策中心',
-    welcome: '我可以帮你查询教学数据、发现运行问题并生成改进建议。',
+    welcome: '我可以帮你查询课程运行、待审批调课、教室使用和成绩提交进度。',
     examples: [
-      '哪些课程平均成绩低于 70 分？',
-      '分析本学期课程运行情况',
-      '查看平台服务运行状态',
+      '现在有多少调课申请待处理？',
+      '本周课程运行怎么样？',
+      '查看教室使用情况。',
     ],
     abilities: [
       { icon: 'el-icon-data-analysis', text: '教学运行驾驶舱' },
@@ -101,8 +107,11 @@ export const resolveCampusRoleState = ({
   const actualRole =
     roleStatus === CAMPUS_ROLE_STATUS.RESOLVED ? matchedRoles[0] : null;
   const canPreview = Boolean(isAdmin || isSystem);
-  const safePreviewRole =
-    canPreview && CAMPUS_ROLE_KEYS.includes(previewRole) ? previewRole : null;
+  const safePreviewRole = canPreview
+    ? CAMPUS_ROLE_KEYS.includes(previewRole)
+      ? previewRole
+      : CAMPUS_ROLE_KEYS[0]
+    : null;
 
   return {
     actualRole,
@@ -120,7 +129,10 @@ export const canAccessCampusRoles = (
   campusRole = createCampusRoleState(),
 ) => {
   const roles = asRoleList(allowedRoles);
-  return !roles.length || roles.includes(campusRole.actualRole);
+  const role = campusRole.canPreview
+    ? campusRole.effectiveRole
+    : campusRole.actualRole;
+  return !roles.length || roles.includes(role);
 };
 
 export const campusDisplayName = (userName, role) => {

@@ -42,7 +42,8 @@ func GetCampusStudentLearningAnalysis(ctx *gin.Context) {
 }
 
 func GetCampusStudentLeaveRecords(ctx *gin.Context) {
-	gin_util.Response(ctx, service.GetCampusStudentLeaveRecords(getOrgID(ctx), getUserID(ctx)), nil)
+	records, err := service.GetCampusStudentLeaveRecords(getOrgID(ctx), getUserID(ctx))
+	gin_util.Response(ctx, records, err)
 }
 
 func HandleCampusStudentMCP(ctx *gin.Context) {

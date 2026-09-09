@@ -240,6 +240,8 @@ services:
 
   bff-service:
     depends_on:
+      mysql:
+        condition: service_healthy
       minio:
         condition: service_healthy
     restart: always
@@ -258,6 +260,9 @@ services:
       - ${WANWU_BFF_OAUTH_RSA_PATH}:/app/tmp/rsa/oauth-rsa
       - ${WANWU_BFF_LOGIN_RSA_PATH}:/app/tmp/rsa/login-rsa
     environment:
+      DB_NAME: ${WANWU_DB_NAME}
+      DB_MYSQL_ADDRESS: ${WANWU_MYSQL_ADDRESS}
+      DB_MYSQL_PASSWORD: ${WANWU_MYSQL_PASSWORD}
       SERVER_WEB_BASE_URL: ${WANWU_WEB_BASE_URL}
       SERVER_API_BASE_URL: ${WANWU_API_BASE_URL}
       SERVER_APP_OPEN_BASE_URL: ${WANWU_APP_OPEN_BASE_URL}
@@ -283,6 +288,7 @@ services:
       OAUTH_SWITCH: ${WANWU_BFF_OAUTH_SWITCH}
       ONTOLOGY_ENABLE: ${WANWU_BFF_ONTOLOGY_ENABLE}
       CUSTOM_INFO_USER_PHONE_REQUIRED: ${WANWU_BFF_USER_PHONE_REQUIRED}
+      WANWU_CAMPUS_WORKFLOW_INTERNAL_SECRET: ${WANWU_CAMPUS_WORKFLOW_INTERNAL_SECRET}
     working_dir: /app
     command: ./bin/bff-service
     healthcheck:
@@ -763,6 +769,10 @@ services:
       WANWU_CALLBACK_CHATFLOW_LIST_URL: http://bff-service:6668/callback/v1/chatflow/list
       WANWU_CALLBACK_MCP_GET_URL: http://bff-service:6668/callback/v1/mcp
       WANWU_CALLBACK_MCP_SERVER_GET_URL: http://bff-service:6668/callback/v1/mcp/server
+      WANWU_CALLBACK_CAMPUS_TEACHER_MCP_URL: http://bff-service:6668/callback/v1/campus/teacher/mcp
+      WANWU_CALLBACK_CAMPUS_ACADEMIC_MCP_URL: http://bff-service:6668/callback/v1/campus/academic/mcp
+      WANWU_CALLBACK_CAMPUS_STUDENT_MCP_URL: http://bff-service:6668/callback/v1/campus/student/mcp
+      WANWU_CAMPUS_WORKFLOW_INTERNAL_SECRET: ${WANWU_CAMPUS_WORKFLOW_INTERNAL_SECRET}
       WANWU_CALLBACK_BUILTIN_SKILL_LIST_URL: http://bff-service:6668/callback/v1/skill/builtin/list
       WANWU_CALLBACK_CUSTOM_SKILL_LIST_URL: http://bff-service:6668/callback/v1/skill/custom/list
       WANWU_CALLBACK_ACQUIRED_SKILL_LIST_URL: http://bff-service:6668/callback/v1/skill/acquired/list

@@ -74,13 +74,17 @@ assert.equal(adminPreview.actualRole, null);
 assert.equal(adminPreview.previewRole, 'teacher');
 assert.equal(adminPreview.effectiveRole, 'teacher');
 
+const adminDefaultPreview = role.resolveCampusRoleState({ isAdmin: true });
+assert.equal(adminDefaultPreview.previewRole, 'student');
+assert.equal(adminDefaultPreview.effectiveRole, 'student');
+
 const rejectedPreview = role.resolveCampusRoleState({
   roles: [{ name: 'student' }],
   previewRole: 'teacher',
 });
 assert.equal(rejectedPreview.previewRole, null);
 assert.equal(rejectedPreview.effectiveRole, 'student');
-assert.equal(role.canAccessCampusRoles(['teacher'], adminPreview), false);
+assert.equal(role.canAccessCampusRoles(['teacher'], adminPreview), true);
 
 const adminStudentPreview = role.resolveCampusRoleState({
   roles: [],
@@ -89,10 +93,7 @@ const adminStudentPreview = role.resolveCampusRoleState({
 });
 assert.equal(adminStudentPreview.actualRole, null);
 assert.equal(adminStudentPreview.effectiveRole, 'student');
-assert.equal(
-  role.canAccessCampusRoles(['student'], adminStudentPreview),
-  false,
-);
+assert.equal(role.canAccessCampusRoles(['student'], adminStudentPreview), true);
 
 const { AGENT, WORKFLOW } = permission.PERMS;
 const menuGroups = menu.menuList;

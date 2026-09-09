@@ -153,9 +153,13 @@ func GetCampusStudentLearningAnalysis(orgID, userID, term string) response.Campu
 	}
 }
 
-func GetCampusStudentLeaveRecords(orgID, userID string) []response.CampusStudentLeaveRecord {
+func GetCampusStudentLeaveRecords(orgID, userID string) ([]response.CampusStudentLeaveRecord, error) {
+	records, err := ListCampusLeaves(CampusBusinessExecutionIdentity{UserID: userID, OrgID: orgID, ActualRole: CampusRoleStudent})
+	if err != nil || len(records) > 0 {
+		return records, err
+	}
 	data := buildCampusStudentData(orgID, userID, time.Now().In(campusLocation))
-	return data.LeaveRecords
+	return data.LeaveRecords, nil
 }
 
 func buildCampusStudentData(orgID, userID string, now time.Time) campusStudentData {

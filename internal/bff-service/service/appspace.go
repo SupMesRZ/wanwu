@@ -99,6 +99,9 @@ func GetWorkflowAndChatflowList(ctx *gin.Context, userId, orgId, name, appType s
 
 	// 根据 appType 决定获取哪些列表
 	if appType == "" || appType == constant.AppTypeWorkflow {
+		if err := ensureCampusWorkflows(ctx, orgId); err != nil {
+			return nil, err
+		}
 		// 获取工作流列表
 		workflowResp, err := ListWorkflow(ctx, orgId, name, constant.AppTypeWorkflow)
 		if err != nil {

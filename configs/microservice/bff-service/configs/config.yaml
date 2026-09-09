@@ -24,6 +24,17 @@ log:
       max_backups: 10
       max_age: 30
 
+db:
+  name: mysql
+  mysql:
+    address: localhost:3306
+    user: root
+    password: Wanwu123456
+    database: assistant_service
+    max_open_conns: 8
+    max_idle_conns: 4
+    log_mode: false
+
 jwt:
   signing-key:
 
@@ -196,6 +207,12 @@ assistant-template:
 # Published read-only Campus Student Assistant. Configure its numeric assistant ID after publishing.
 campus-student:
   assistant_id: "1"
+
+# Published competition-demo Campus Teacher and Academic Admin Assistants.
+campus-business:
+  teacher_assistant_id: "4"
+  academic_assistant_id: "5"
+  teacher_review_org_id: "2"
 
 workflow-template:
   server_mode: local

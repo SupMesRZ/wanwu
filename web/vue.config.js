@@ -78,6 +78,10 @@ module.exports = {
     open: false,
     hot: true,
     compress: false,
+    host: '0.0.0.0',
+    client: {
+      webSocketURL: 'auto://0.0.0.0:0/ws',
+    },
     historyApiFallback: {
       rewrites: [{ from: /^\/aibase(?:\/.*)?$/, to: '/aibase/index.html' }],
     },

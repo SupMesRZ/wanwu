@@ -84,6 +84,7 @@ func CheckUserPerm(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
+	ctx.Set(gin_util.X_ORG_ID, orgID)
 	// tags
 	tags, ok := route.GetTags(ctx.FullPath(), ctx.Request.Method)
 	if !ok {

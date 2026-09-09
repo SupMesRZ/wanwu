@@ -49,12 +49,17 @@ log/
 !internal/agent-service/service/agent-tool/mcp_execution_auth_test.go
 !internal/assistant-service/server/grpc/assistant/execution_auth_test.go
 !internal/bff-service/server/http/middleware/campus_student_execution_test.go
+!internal/bff-service/server/http/middleware/campus_business_test.go
 !internal/bff-service/server/http/middleware/record_test.go
 !internal/bff-service/service/campus_student_agent_test.go
 !pkg/sse-util/sse-connector/sse_connector_test.go
 !internal/bff-service/service/assistant_execution_auth_test.go
 !internal/bff-service/service/campus_student_mcp_test.go
+!internal/bff-service/service/campus_business_mcp_test.go
+!internal/bff-service/service/campus_leave_test.go
+!internal/bff-service/service/campus_role_agent_test.go
 !internal/bff-service/service/campus_student_test.go
+!internal/bff-service/service/campus_workflow_runtime_test.go
 !pkg/campusstudent/tools_test.go
 !pkg/http-client/execution_auth_log_test.go
 bin/amd64/*

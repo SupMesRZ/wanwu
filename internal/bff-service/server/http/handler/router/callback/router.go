@@ -37,6 +37,11 @@ func Register(callbackAPI *gin.RouterGroup) {
 	// mcp
 	mid.Sub("callback").Reg(callbackAPI, "/mcp", http.MethodGet, callback.GetMCP, "获取自定义MCP详情")
 	mid.Sub("callback").Reg(callbackAPI, "/mcp/server", http.MethodGet, callback.GetMCPServer, "获取MCP服务详情")
+	for _, method := range []string{http.MethodPost, http.MethodGet, http.MethodDelete} {
+		mid.Sub("callback").Reg(callbackAPI, "/campus/teacher/mcp", method, callback.CampusTeacherWorkflowMCP, "工作流教师 MCP")
+		mid.Sub("callback").Reg(callbackAPI, "/campus/academic/mcp", method, callback.CampusAcademicWorkflowMCP, "工作流教务 MCP")
+		mid.Sub("callback").Reg(callbackAPI, "/campus/student/mcp", method, callback.CampusStudentWorkflowMCP, "工作流学生 MCP")
+	}
 	// chatflow
 	mid.Sub("callback").Reg(callbackAPI, "/chatflow/list", http.MethodGet, callback.GetChatflowList, "根据userId和spaceId获取Chatflow")
 	// agent bff proxy

@@ -90,11 +90,19 @@ func TestCampusStudentExecutionIdentityAuthorization(t *testing.T) {
 		}
 	})
 
-	for _, userID := range []string{"teacher", "academic", "admin", "system", "admin-teacher", "conflict"} {
+	for _, userID := range []string{"teacher", "academic", "conflict"} {
 		t.Run(userID+" is forbidden", func(t *testing.T) {
 			resp := executeCampusIdentityRequest(t, router, userID, "org-a", nil)
 			if resp.Code != http.StatusForbidden {
 				t.Fatalf("expected 403, got %d", resp.Code)
+			}
+		})
+	}
+
+	for _, userID := range []string{"admin", "system", "admin-teacher"} {
+		t.Run(userID+" can preview", func(t *testing.T) {
+			if got := executeCampusIdentityRequest(t, router, userID, "org-a", nil).Code; got != http.StatusOK {
+				t.Fatalf("expected 200, got %d", got)
 			}
 		})
 	}

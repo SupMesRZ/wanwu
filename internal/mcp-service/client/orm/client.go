@@ -13,6 +13,7 @@ import (
 	"github.com/UnicomAI/wanwu/internal/mcp-service/client/model"
 	mcpconfig "github.com/UnicomAI/wanwu/internal/mcp-service/config"
 
+	"github.com/UnicomAI/wanwu/pkg/campusbusiness"
 	"github.com/UnicomAI/wanwu/pkg/campusstudent"
 	"gorm.io/gorm"
 )
@@ -82,23 +83,42 @@ func NewClient(ctx context.Context, db *gorm.DB) (*Client, error) {
 	if err := c.ensureCampusStudentMCP(ctx, tools); err != nil {
 		return nil, err
 	}
+	teacherEndpoint := campusbusiness.TeacherEndpoint(mcpconfig.Cfg().Server.ApiBaseUrl)
+	if err := c.ensureCampusBusinessMCP(ctx, campusbusiness.TeacherMCPCode, "河小智教师业务 MCP", "河北大学河小智教师校园业务能力连接服务（比赛模拟数据）", teacherEndpoint, campusbusiness.TeacherToolDefinitions(teacherEndpoint)); err != nil {
+		return nil, err
+	}
+	academicEndpoint := campusbusiness.AcademicEndpoint(mcpconfig.Cfg().Server.ApiBaseUrl)
+	if err := c.ensureCampusBusinessMCP(ctx, campusbusiness.AcademicMCPCode, "河小智教务业务 MCP", "河北大学河小智教务校园业务能力连接服务（比赛模拟数据）", academicEndpoint, campusbusiness.AcademicToolDefinitions(academicEndpoint)); err != nil {
+		return nil, err
+	}
 	return c, nil
+}
+
+func (c *Client) ensureCampusBusinessMCP(ctx context.Context, code, name, description, endpoint string, defs []campusbusiness.ToolDefinition) error {
+	tools := make([]model.MCPServerTool, 0, len(defs))
+	for _, def := range defs {
+		tools = append(tools, model.MCPServerTool{MCPServerToolId: code + "_" + def.Name, Name: def.Name, Description: def.Description, Schema: def.Schema})
+	}
+	return c.ensureManagedCampusMCP(ctx, code, name, description, endpoint, tools)
 }
 
 func (c *Client) ensureCampusStudentMCP(ctx context.Context, tools []model.MCPServerTool) error {
 	endpoint := campusstudent.Endpoint(mcpconfig.Cfg().Server.ApiBaseUrl)
-	code := campusstudent.MCPCode
+	return c.ensureManagedCampusMCP(ctx, campusstudent.MCPCode, "河小智学生业务 MCP", "河北大学河小智学生校园业务能力连接服务", endpoint, tools)
+}
+
+func (c *Client) ensureManagedCampusMCP(ctx context.Context, code, name, description, endpoint string, tools []model.MCPServerTool) error {
 	var server model.MCPServer
-	err := c.db.WithContext(ctx).Where("code = ?", campusstudent.MCPCode).First(&server).Error
+	err := c.db.WithContext(ctx).Where("code = ?", code).First(&server).Error
 	enabled := true
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		server = model.MCPServer{MCPServerID: campusstudent.MCPCode, Code: &code, Name: "河小智学生业务 MCP", Description: "河北大学河小智学生校园业务能力连接服务", Kind: "campus", Endpoint: endpoint, AuthMode: "campus_execution_context", Enabled: &enabled, UserID: "system", OrgID: "system"}
+		server = model.MCPServer{MCPServerID: code, Code: &code, Name: name, Description: description, Kind: "campus", Endpoint: endpoint, AuthMode: "campus_execution_context", Enabled: &enabled, UserID: "system", OrgID: "system"}
 		if err := c.db.WithContext(ctx).Create(&server).Error; err != nil {
 			return err
 		}
 	} else if err != nil {
 		return err
-	} else if err := c.db.WithContext(ctx).Model(&server).Updates(map[string]any{"name": "河小智学生业务 MCP", "description": "河北大学河小智学生校园业务能力连接服务", "kind": "campus", "endpoint": endpoint, "auth_mode": "campus_execution_context", "enabled": true}).Error; err != nil {
+	} else if err := c.db.WithContext(ctx).Model(&server).Updates(map[string]any{"name": name, "description": description, "kind": "campus", "endpoint": endpoint, "auth_mode": "campus_execution_context", "enabled": true}).Error; err != nil {
 		return err
 	}
 	for _, tool := range tools {

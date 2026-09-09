@@ -17,6 +17,7 @@ func Register(apiV1 *gin.RouterGroup) {
 	// wga
 	registerWGA(apiV1)
 	registerCampusStudent(apiV1)
+	registerCampusBusiness(apiV1)
 
 	// ontology
 	registerOntology(apiV1)

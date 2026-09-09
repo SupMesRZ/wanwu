@@ -21,12 +21,12 @@
     <section v-if="configError" class="student-assistant__empty">
       <img
         :src="displayAvatar"
-        alt="河小智学生助手"
+        :alt="roleProfile.assistantName"
         @error="handleAvatarError"
       />
-      <h2>河小智学生助手暂未开放</h2>
+      <h2>{{ roleProfile.assistantName }}暂未开放</h2>
       <p>{{ configError }}</p>
-      <div>
+      <div v-if="isStudent">
         <el-button size="small" @click="openPage('/campus/student/courses')">
           查看我的课程
         </el-button>
@@ -44,7 +44,7 @@
       ref="chat"
       chat-type="chat"
       type="campusStudent"
-      input-placeholder="问问河小智，课程、考试、成绩、校园事务都可以……"
+      :input-placeholder="`问问${roleProfile.assistantName}……`"
       :edit-form="chatEditForm"
       :campus-student-adapter="campusStudentAdapter"
       :visible-clear-history="false"
@@ -61,7 +61,7 @@
             @error="handleWelcomeAvatarError"
           />
           <h1 id="welcome-title">你好，我是河小智</h1>
-          <p>问课程、查成绩、看事务，让校园服务更简单。</p>
+          <p>{{ roleProfile.welcome }}</p>
         </section>
       </template>
 
@@ -114,6 +114,11 @@ import {
   getStudentAssistant,
   STUDENT_ASSISTANT_CHAT_URL,
 } from '@/api/campusStudent';
+import {
+  campusRoleAssistantChatUrl,
+  createCampusRoleAssistantConversation,
+  getCampusRoleAssistant,
+} from '@/api/campusBusiness';
 
 const STRUCTURED_ACTIONS = [
   {
@@ -146,14 +151,16 @@ const STRUCTURED_ACTIONS = [
 export default {
   name: 'CampusStudentAssistant',
   components: { AgentChat },
+  props: {
+    role: { type: String, default: 'student' },
+  },
   data() {
     return {
       configError: '',
       hasConversation: false,
       schoolLogoFailed: false,
-      quickQuestions: CAMPUS_ROLES.student.examples,
       editForm: {
-        name: '河小智学生助手',
+        name: CAMPUS_ROLES[this.role]?.assistantName || '河小智助手',
         avatar: { path: campusStudentAssistantAvatar() },
         prologue: '',
         recommendQuestion: [],
@@ -166,6 +173,15 @@ export default {
   },
   computed: {
     ...mapGetters('user', ['token', 'userInfo', 'commonInfo']),
+    roleProfile() {
+      return CAMPUS_ROLES[this.role] || CAMPUS_ROLES.student;
+    },
+    isStudent() {
+      return this.role === 'student';
+    },
+    quickQuestions() {
+      return this.roleProfile.examples;
+    },
     fallbackAvatar() {
       return campusStudentAssistantAvatar();
     },
@@ -198,13 +214,15 @@ export default {
   methods: {
     async loadAssistant() {
       try {
-        const res = await getStudentAssistant();
+        const res = this.isStudent
+          ? await getStudentAssistant()
+          : await getCampusRoleAssistant(this.role);
         if (res.code !== 0 || !res.data) {
           this.configError =
             '管理员完成配置并发布后即可使用，你仍可查看个人校园信息。';
           return;
         }
-        this.editForm.name = res.data.name || '河小智学生助手';
+        this.editForm.name = res.data.name || this.roleProfile.assistantName;
         this.editForm.avatar = {
           ...(res.data.avatar || {}),
           path: campusStudentAssistantAvatar(res.data.avatar?.path),
@@ -256,13 +274,17 @@ export default {
       this.$nextTick(() => this.$refs.chat?.preSend(message));
     },
     async createConversation(message) {
-      return createStudentAssistantConversation(message);
+      return this.isStudent
+        ? createStudentAssistantConversation(message)
+        : createCampusRoleAssistantConversation(this.role, message);
     },
     stream(message, conversationId) {
       const chat = this.$refs.chat;
       const historyLength = chat.$refs['session-com']?.getList().length || 0;
       chat.sendEventSource(message, '', historyLength, {
-        streamApi: STUDENT_ASSISTANT_CHAT_URL,
+        streamApi: this.isStudent
+          ? STUDENT_ASSISTANT_CHAT_URL
+          : campusRoleAssistantChatUrl(this.role),
         streamData: { conversationId, message },
         headers: {
           'Content-Type': 'application/json',

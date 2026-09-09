@@ -283,6 +283,54 @@ const CAMPUS_TOOL_LABELS = {
     name: '学习情况分析',
     desc: '获取当前登录学生本人的成绩概览和学习分析',
   },
+  query_my_teaching_schedule: {
+    name: '查询我的授课课表',
+    desc: '查询当前登录教师本人的授课课程、班级、时间与地点',
+  },
+  query_my_teaching_classes: {
+    name: '查询我的授课班级',
+    desc: '查询当前登录教师负责的课程和班级',
+  },
+  query_my_invigilation: {
+    name: '查询我的监考安排',
+    desc: '查询当前登录教师本人的监考时间与地点',
+  },
+  query_available_classrooms: {
+    name: '查询可用教室',
+    desc: '按日期和时间查询可用教室',
+  },
+  query_my_adjustment_records: {
+    name: '查询我的调课记录',
+    desc: '查询当前登录教师本人的调课申请及审批状态',
+  },
+  create_course_adjustment_request: {
+    name: '提交调课申请',
+    desc: '在教师明确确认后提交调课申请',
+  },
+  query_course_operation_overview: {
+    name: '查询课程运行概览',
+    desc: '查询本周课程运行情况与异常指标',
+  },
+  query_pending_adjustment_requests: {
+    name: '查询调课申请',
+    desc: '默认查询待审批申请，也可查询全部或指定状态的历史记录',
+  },
+  query_room_utilization: {
+    name: '查询教室使用情况',
+    desc: '查询教学楼教室使用率',
+  },
+  query_grade_submission_progress: {
+    name: '查询成绩提交进度',
+    desc: '查询课程成绩提交完成情况',
+  },
+  query_teaching_service_statistics: {
+    name: '查询教学服务统计',
+    desc: '查询教学服务办理量、时效与满意度',
+  },
+  review_course_adjustment_request: {
+    name: '审批调课申请',
+    desc: '批准或驳回指定的待审批调课申请',
+  },
 };
 export default {
   name: 'McpServiceServerDetail',

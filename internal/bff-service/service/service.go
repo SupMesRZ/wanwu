@@ -23,6 +23,7 @@ import (
 	safety_service "github.com/UnicomAI/wanwu/api/proto/safety-service"
 	"github.com/UnicomAI/wanwu/internal/bff-service/config"
 	"github.com/UnicomAI/wanwu/internal/bff-service/model/response"
+	"github.com/UnicomAI/wanwu/pkg/db"
 	gin_util "github.com/UnicomAI/wanwu/pkg/gin-util"
 	trace_util "github.com/UnicomAI/wanwu/pkg/trace-util"
 	"github.com/gin-gonic/gin"
@@ -53,6 +54,17 @@ var (
 // --- API ---
 
 func Init() error {
+	database, err := db.New(config.Cfg().DB)
+	if err != nil {
+		return fmt.Errorf("init campus business db err: %v", err)
+	}
+	if err := initCampusAdjustmentStore(database); err != nil {
+		return fmt.Errorf("init campus adjustment store err: %v", err)
+	}
+	if err := initCampusLeaveStore(database); err != nil {
+		return fmt.Errorf("init campus leave store err: %v", err)
+	}
+
 	// grpc connections
 	iamConn, err := newConn(config.Cfg().Iam.Host)
 	if err != nil {

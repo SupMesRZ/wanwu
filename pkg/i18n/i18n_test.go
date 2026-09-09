@@ -29,6 +29,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestI18nConvertXlsx2Jsonl(t *testing.T) {
+	if _, err := os.Stat(xlsxFile); os.IsNotExist(err) {
+		t.Skipf("optional i18n source is unavailable: %s", xlsxFile)
+	} else if err != nil {
+		t.Fatal(err)
+	}
 	cfg := YamlConfig{}
 	if err := util.LoadConfig(yamlFile, &cfg); err != nil {
 		t.Fatal(err)

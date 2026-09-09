@@ -18,6 +18,7 @@ func TestCampusStudentMCPToolSchemas(t *testing.T) {
 		"query_my_score":            false,
 		"query_my_leave_records":    false,
 		"query_my_learning_summary": false,
+		"create_leave_application":  false,
 	}
 	for _, tool := range tools {
 		wantNames[tool.definition.Name] = true
@@ -39,7 +40,7 @@ func TestCampusStudentMCPToolSchemas(t *testing.T) {
 		}
 	}
 	if len(tools) != len(wantNames) {
-		t.Fatalf("expected five tools, got %d", len(tools))
+		t.Fatalf("unexpected tool count, got %d", len(tools))
 	}
 	for name, found := range wantNames {
 		if !found {

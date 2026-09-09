@@ -2,6 +2,7 @@ package agent_tool
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -60,6 +61,57 @@ func TestCampusMCPExecutionAuthExactWhitelist(t *testing.T) {
 		if gotHeaders["Authorization"] != "" || gotHeaders["X-Org-Id"] != "" {
 			t.Fatalf("execution auth leaked to %q: %v", target, gotHeaders)
 		}
+	}
+}
+
+func TestTeacherAndAcademicMCPExecutionAuthWhitelist(t *testing.T) {
+	original := config.GetConfig().BffServer
+	config.GetConfig().BffServer = &config.BffServerConfig{Endpoint: "http://bff-service:6668"}
+	defer func() { config.GetConfig().BffServer = original }()
+
+	ctx := execution_context.WithAuth(context.Background(), "Bearer trusted", "org-a")
+	for path, kind := range map[string]string{
+		"/v1/campus/teacher/mcp":  "campus_teacher",
+		"/v1/campus/academic/mcp": "campus_academic_admin",
+	} {
+		target := "http://bff-service:6667" + path
+		_, headers, err := buildMCPConnectionParams(ctx, &request.MCPToolInfo{URL: target, Headers: map[string]string{"X-User-Id": "forged"}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if headers["Authorization"] != "Bearer trusted" || headers["X-Org-Id"] != "org-a" || headers["X-User-Id"] != "" {
+			t.Fatalf("trusted execution headers not enforced for %s: %v", target, headers)
+		}
+		if got := campusMCPKindForURL(target, config.GetConfig().BffServer.Endpoint); got != kind {
+			t.Fatalf("kind=%q, want %q", got, kind)
+		}
+	}
+}
+
+func TestRouteCampusWorkflow(t *testing.T) {
+	original := config.GetConfig().BffServer
+	config.GetConfig().BffServer = &config.BffServerConfig{Endpoint: "http://bff-service:6668"}
+	defer func() { config.GetConfig().BffServer = original }()
+
+	ctx := execution_context.WithAuth(context.Background(), "Bearer trusted", "org-a")
+	url, body, headers, routed, err := routeCampusWorkflow(ctx, "student_leave_full_process", `{"leaveType":"病假"}`)
+	if err != nil || !routed || url != "http://bff-service:6667/v1/campus/workflow/run" {
+		t.Fatalf("route failed: url=%q routed=%v err=%v", url, routed, err)
+	}
+	var payload struct {
+		WorkflowCode string         `json:"workflowCode"`
+		Input        map[string]any `json:"input"`
+	}
+	if err := json.Unmarshal([]byte(body), &payload); err != nil || payload.WorkflowCode != "student_leave_full_process" || payload.Input["leaveType"] != "病假" {
+		t.Fatalf("unexpected body: %s err=%v", body, err)
+	}
+	if headers["Authorization"] != "Bearer trusted" || headers["X-Org-Id"] != "org-a" {
+		t.Fatalf("trusted execution headers missing: %v", headers)
+	}
+
+	_, unchanged, _, routed, err := routeCampusWorkflow(ctx, "ordinary_workflow", `{"x":1}`)
+	if err != nil || routed || unchanged != `{"x":1}` {
+		t.Fatalf("ordinary workflow was modified: body=%q routed=%v err=%v", unchanged, routed, err)
 	}
 }
 

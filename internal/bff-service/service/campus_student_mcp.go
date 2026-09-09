@@ -43,11 +43,15 @@ var (
 )
 
 type CampusStudentExecutionIdentity struct {
-	UserID string `json:"userId"`
-	OrgID  string `json:"orgId"`
+	UserID      string `json:"userId"`
+	OrgID       string `json:"orgId"`
+	ExecutionID string `json:"-"`
 }
 
 type campusStudentExecutionIdentityKey struct{}
+type campusStudentWorkflowExecutionKey struct{}
+type campusStudentWorkflowExecuteIDKey struct{}
+type campusStudentWorkflowCodeKey struct{}
 
 type campusStudentMCPTool struct {
 	definition *protocol.Tool
@@ -111,11 +115,35 @@ var (
 	campusStudentMCPInitErr error
 )
 
-func WithCampusStudentExecutionIdentity(ctx context.Context, userID, orgID string) context.Context {
+func WithCampusStudentExecutionIdentity(ctx context.Context, userID, orgID string, executionID ...string) context.Context {
+	id := CampusStudentExecutionIdentity{UserID: userID, OrgID: orgID}
+	if len(executionID) > 0 {
+		id.ExecutionID = executionID[0]
+	}
 	return context.WithValue(ctx, campusStudentExecutionIdentityKey{}, CampusStudentExecutionIdentity{
-		UserID: userID,
-		OrgID:  orgID,
+		UserID: id.UserID, OrgID: id.OrgID, ExecutionID: id.ExecutionID,
 	})
+}
+
+func WithCampusStudentWorkflowExecution(ctx context.Context, executeID ...string) context.Context {
+	ctx = context.WithValue(ctx, campusStudentWorkflowExecutionKey{}, true)
+	if len(executeID) > 0 {
+		ctx = context.WithValue(ctx, campusStudentWorkflowExecuteIDKey{}, executeID[0])
+	}
+	return ctx
+}
+
+func WithCampusStudentWorkflowCode(ctx context.Context, workflowCode string) context.Context {
+	return context.WithValue(ctx, campusStudentWorkflowCodeKey{}, workflowCode)
+}
+
+func campusStudentWorkflowCode(ctx context.Context) string {
+	v, _ := ctx.Value(campusStudentWorkflowCodeKey{}).(string)
+	return v
+}
+func campusStudentWorkflowExecution(ctx context.Context) bool {
+	v, _ := ctx.Value(campusStudentWorkflowExecutionKey{}).(bool)
+	return v
 }
 
 func CampusStudentExecutionIdentityFromContext(ctx context.Context) (CampusStudentExecutionIdentity, bool) {
@@ -157,6 +185,7 @@ func ServeCampusStudentMCP(resp http.ResponseWriter, req *http.Request) error {
 
 func campusStudentMCPTools() []campusStudentMCPTool {
 	defs := campusstudent.ToolDefinitions("")
+	defs = append(defs, campusstudent.ToolDefinition{Name: "create_leave_application", Description: "Submit a student leave application (workflow only)", Schema: `{"type":"object","properties":{"startTime":{"type":"string"},"endTime":{"type":"string"},"leaveType":{"type":"string"},"reason":{"type":"string"},"attachmentId":{"type":"string"},"confirmed":{"type":"boolean"}},"required":["startTime","endTime","leaveType","reason","confirmed"],"additionalProperties":false}`})
 	tools := make([]campusStudentMCPTool, 0, len(defs))
 	for _, def := range defs {
 		var run func(CampusStudentExecutionIdentity, json.RawMessage) (any, *campusToolError)
@@ -171,10 +200,17 @@ func campusStudentMCPTools() []campusStudentMCPTool {
 			run = queryMyLeaveRecords
 		case "query_my_learning_summary":
 			run = queryMyLearningSummary
+		case "create_leave_application":
+			run = createLeaveApplication
 		}
 		var schema map[string]any
 		_ = json.Unmarshal([]byte(def.Schema), &schema)
-		props := schema["paths"].(map[string]any)["/"+def.Name].(map[string]any)["post"].(map[string]any)["requestBody"].(map[string]any)["content"].(map[string]any)["application/json"].(map[string]any)["schema"].(map[string]any)
+		var props map[string]any
+		if def.Name == "create_leave_application" {
+			props = schema
+		} else {
+			props = schema["paths"].(map[string]any)["/"+def.Name].(map[string]any)["post"].(map[string]any)["requestBody"].(map[string]any)["content"].(map[string]any)["application/json"].(map[string]any)["schema"].(map[string]any)
+		}
 		raw, _ := json.Marshal(props)
 		tools = append(tools, campusStudentMCPTool{newCampusStudentMCPTool(def.Name, def.Description, raw), campusStudentToolHandler(run)})
 	}
@@ -201,12 +237,36 @@ func campusStudentToolHandler(run func(CampusStudentExecutionIdentity, json.RawM
 		if !ok {
 			return campusToolErrorResult("execution_identity_missing", "Trusted campus student identity is unavailable"), nil
 		}
+		if request.Name == "create_leave_application" && (!campusStudentWorkflowExecution(ctx) || campusStudentWorkflowCode(ctx) != campusWorkflowLeaveCode) {
+			return campusToolErrorResult("workflow_required", "This operation is only available inside the approved workflow"), nil
+		}
 		data, toolErr := run(identity, request.RawArguments)
 		if toolErr != nil {
 			return campusToolErrorResult(toolErr.Code, toolErr.Message), nil
 		}
 		return campusToolJSONResult(data), nil
 	}
+}
+
+type leaveArguments struct {
+	StartTime    string `json:"startTime"`
+	EndTime      string `json:"endTime"`
+	LeaveType    string `json:"leaveType"`
+	Reason       string `json:"reason"`
+	AttachmentID string `json:"attachmentId,omitempty"`
+	Confirmed    bool   `json:"confirmed"`
+}
+
+func createLeaveApplication(identity CampusStudentExecutionIdentity, raw json.RawMessage) (any, *campusToolError) {
+	args, err := decodeCampusToolArguments[leaveArguments](raw)
+	if err != nil {
+		return nil, invalidCampusToolArguments()
+	}
+	app, err := CreateCampusLeave(CampusBusinessExecutionIdentity{UserID: identity.UserID, OrgID: identity.OrgID, ActualRole: CampusRoleStudent}, identity.ExecutionID, args.StartTime, args.EndTime, args.LeaveType, args.Reason, args.AttachmentID, args.Confirmed)
+	if err != nil {
+		return nil, &campusToolError{Code: err.Error(), Message: "请假申请未提交"}
+	}
+	return app, nil
 }
 
 func queryMySchedule(identity CampusStudentExecutionIdentity, raw json.RawMessage) (any, *campusToolError) {
@@ -220,6 +280,13 @@ func queryMySchedule(identity CampusStudentExecutionIdentity, raw json.RawMessag
 
 	if args.Date != "" {
 		day, err := time.ParseInLocation("2006-01-02", args.Date, campusLocation)
+		if err != nil {
+			if parsed, parseErr := time.Parse(time.RFC3339, args.Date); parseErr == nil {
+				args.Date = parsed.In(campusLocation).Format("2006-01-02")
+				day = time.Date(parsed.In(campusLocation).Year(), parsed.In(campusLocation).Month(), parsed.In(campusLocation).Day(), 0, 0, 0, 0, campusLocation)
+				err = nil
+			}
+		}
 		if err != nil {
 			return nil, &campusToolError{Code: "invalid_date", Message: "date must use YYYY-MM-DD format"}
 		}
@@ -274,7 +341,10 @@ func queryMyLeaveRecords(identity CampusStudentExecutionIdentity, raw json.RawMe
 	if _, err := decodeCampusToolArguments[campusNoArguments](raw); err != nil {
 		return nil, invalidCampusToolArguments()
 	}
-	records := GetCampusStudentLeaveRecords(identity.OrgID, identity.UserID)
+	records, err := GetCampusStudentLeaveRecords(identity.OrgID, identity.UserID)
+	if err != nil {
+		return nil, &campusToolError{Code: "internal_error", Message: "请假记录暂时无法读取"}
+	}
 	return campusLeaveRecordsResult{Count: len(records), Records: records}, nil
 }
 

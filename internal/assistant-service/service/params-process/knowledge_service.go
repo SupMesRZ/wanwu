@@ -118,6 +118,9 @@ func (k *KnowledgeProcess) Prepare(agent *AgentInfo, prepareParams *AgentPrepare
 	return nil
 }
 func (k *KnowledgeProcess) Build(assistant *AgentInfo, prepareParams *AgentPrepareParams, agentChatParams *assistant_service.AgentDetail) error {
+	if assistant.Assistant.KnowledgebaseConfig == "" {
+		return nil
+	}
 	knowledgeBaseConfig := &RAGKnowledgeBaseConfig{}
 	if err := json.Unmarshal([]byte(assistant.Assistant.KnowledgebaseConfig), knowledgeBaseConfig); err != nil {
 		return fmt.Errorf("Assistant服务解析智能体知识库配置失败，assistantId: %d, error: %v, knowledgebaseConfigRaw: %s", assistant.Assistant.ID, err, assistant.Assistant.KnowledgebaseConfig)

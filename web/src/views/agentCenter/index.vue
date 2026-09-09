@@ -50,7 +50,12 @@
               <small>{{ agent.audience }}</small>
               <h3>{{ agent.name }}</h3>
             </div>
-            <el-tag size="mini" :type="agentStatus(agent).type" effect="plain">
+            <el-tag
+              size="mini"
+              :type="agentStatus(agent).type"
+              :title="agentStatus(agent).tip || ''"
+              effect="plain"
+            >
               {{ agentStatus(agent).text }}
             </el-tag>
           </div>
@@ -80,38 +85,30 @@
             </div>
           </div>
           <div class="agent-actions">
-            <template v-if="agent.key === 'student'">
+            <template v-if="canManageAgent">
               <el-button
                 type="primary"
                 size="small"
-                :disabled="!studentBinding.assistantId"
-                @click="editStudentAssistant"
+                :disabled="!binding(agent).assistantId"
+                @click="editAssistant(agent)"
               >
                 编辑配置
               </el-button>
               <el-button
                 size="small"
-                :disabled="!studentBinding.assistantId"
-                @click="publishStudentAssistant"
+                :disabled="!binding(agent).assistantId"
+                @click="publishAssistant(agent)"
               >
                 发布
               </el-button>
               <el-button
                 size="small"
-                :disabled="!studentBinding.published"
-                @click="previewStudentAssistant"
+                :disabled="!binding(agent).published"
+                @click="experience(agent)"
               >
                 预览
               </el-button>
             </template>
-            <el-button
-              v-else
-              type="primary"
-              size="small"
-              @click="experience(agent)"
-            >
-              体验助手
-            </el-button>
             <el-button size="small" @click="showDetail(agent)">
               能力详情
             </el-button>
@@ -208,6 +205,7 @@
 <script>
 import { checkPerm, PERMS } from '@/router/permission';
 import { getStudentAssistantBinding } from '@/api/campusStudent';
+import { getCampusRoleAssistantBinding } from '@/api/campusBusiness';
 
 export default {
   name: 'AgentCenter',
@@ -215,10 +213,10 @@ export default {
     return {
       detailVisible: false,
       activeAgent: {},
-      studentBinding: {
-        assistantId: '',
-        published: false,
-        ready: false,
+      bindings: {
+        student: {},
+        teacher: {},
+        academic_admin: {},
       },
       summaries: [
         {
@@ -229,9 +227,9 @@ export default {
           color: 'blue',
         },
         {
-          label: '已规划 MCP',
-          value: '8',
-          note: '均为比赛模拟接入',
+          label: 'Campus MCP',
+          value: '3',
+          note: '学生、教师、教务真实注册',
           icon: 'el-icon-connection',
           color: 'cyan',
         },
@@ -268,7 +266,7 @@ export default {
           description:
             '覆盖学习查询、校园事务和个性化学习辅助，让学生一句话完成校园服务。',
           abilities: ['课表与成绩查询', '请假与校园事务', '学习计划与错题分析'],
-          mcp: 4,
+          mcp: 1,
           knowledge: 3,
           workflow: 6,
           calls: '2,126',
@@ -288,7 +286,7 @@ export default {
           color: 'cyan',
           description: '提供智能备课、教学资料生成、课程管理和学情反馈分析。',
           abilities: ['教学设计与大纲', 'PPT 与练习生成', '课程评价与学情分析'],
-          mcp: 2,
+          mcp: 1,
           knowledge: 6,
           workflow: 5,
           calls: '986',
@@ -308,7 +306,7 @@ export default {
           color: 'violet',
           description: '聚合教学运行数据，自动生成统计报告并提供管理辅助决策。',
           abilities: ['学院教学分析', '课程运行分析', '统计报告与辅助决策'],
-          mcp: 2,
+          mcp: 1,
           knowledge: 3,
           workflow: 5,
           calls: '456',
@@ -356,45 +354,60 @@ export default {
     canCreateAgent() {
       return checkPerm(PERMS.AGENT);
     },
+    canManageAgent() {
+      const { isAdmin, isSystem } = this.$store.state.user.permission || {};
+      return isAdmin || isSystem;
+    },
   },
   created() {
-    if (this.canCreateAgent) this.loadStudentBinding();
+    if (this.canCreateAgent) this.loadBindings();
   },
   methods: {
-    async loadStudentBinding() {
-      const res = await getStudentAssistantBinding();
-      if (res.code === 0 && res.data) this.studentBinding = res.data;
-    },
-    agentStatus(agent) {
-      if (agent.key !== 'student') return { type: 'success', text: '运行中' };
-      if (this.studentBinding.ready) return { type: 'success', text: '已发布' };
-      if (this.studentBinding.published)
-        return { type: 'warning', text: '配置待修正' };
-      return {
-        type: 'info',
-        text: this.studentBinding.assistantId ? '待发布' : '未绑定',
-      };
-    },
-    editStudentAssistant() {
-      this.$router.push({
-        path: '/agent/test',
-        query: { id: this.studentBinding.assistantId },
+    async loadBindings() {
+      const results = await Promise.all([
+        getStudentAssistantBinding(),
+        getCampusRoleAssistantBinding('teacher'),
+        getCampusRoleAssistantBinding('academic_admin'),
+      ]);
+      ['student', 'teacher', 'academic_admin'].forEach((role, index) => {
+        const res = results[index];
+        if (res.code === 0 && res.data)
+          this.$set(this.bindings, role, res.data);
       });
     },
-    publishStudentAssistant() {
+    binding(agent) {
+      return this.bindings[agent.key] || {};
+    },
+    agentStatus(agent) {
+      const binding = this.binding(agent);
+      if (binding.ready) return { type: 'success', text: '已发布' };
+      if (binding.published)
+        return {
+          type: 'warning',
+          text: '配置待修正',
+          tip: '点击“编辑配置”，确认对应 Campus MCP 的必需工具已全部启用，然后重新发布。',
+        };
+      return {
+        type: 'info',
+        text: binding.assistantId ? '待发布' : '未绑定',
+      };
+    },
+    editAssistant(agent) {
+      this.$router.push({
+        path: '/agent/test',
+        query: { id: this.binding(agent).assistantId },
+      });
+    },
+    publishAssistant(agent) {
+      const binding = this.binding(agent);
       this.$router.push({
         path: '/agent/publishSet',
         query: {
-          appId: this.studentBinding.assistantId,
+          appId: binding.assistantId,
           appType: 'agent',
-          name: this.studentBinding.name || '河小智·学生助手',
+          name: binding.name || agent.name,
         },
       });
-    },
-    previewStudentAssistant() {
-      this.$router.push(
-        `/campus/student/assistant/preview/${this.studentBinding.assistantId}`,
-      );
     },
     experience(agent) {
       this.$router.push({

@@ -30,9 +30,9 @@ func BuildAgentToolsConfig(ctx *gin.Context, req *request.AgentChatParams, chatI
 	//mcp 不用替换工具名
 	mcpToolList, mcpToolIDNameMap, mcpErr := GetToolsFromMCPServers(ctx.Request.Context(), req.ToolParams.McpToolList)
 	if mcpErr != nil {
-		if campusMCP := campusStudentMCP(req.ToolParams.McpToolList); campusMCP != nil {
-			log.Errorf("Campus Student MCP unavailable: %s error_type=%T error=%v", mcpServerLogLabel(campusMCP), mcpErr, mcpErr)
-			return adk.ToolsConfig{}, nil, errors.New("[direct]学生校园业务工具暂时不可用，请稍后重试。")
+		if campusMCP := campusManagedMCP(req.ToolParams.McpToolList); campusMCP != nil {
+			log.Errorf("Managed Campus MCP unavailable: %s error_type=%T error=%v", mcpServerLogLabel(campusMCP), mcpErr, mcpErr)
+			return adk.ToolsConfig{}, nil, errors.New("[direct]校园业务工具暂时不可用，请稍后重试。")
 		}
 		log.Errorf("MCP tools unavailable: server_count=%d error_type=%T", len(req.ToolParams.McpToolList), mcpErr)
 	}
@@ -63,12 +63,12 @@ func BuildAgentToolsConfig(ctx *gin.Context, req *request.AgentChatParams, chatI
 	}, totalToolIDNameMap, nil
 }
 
-func campusStudentMCP(toolParamsList []*request.MCPToolInfo) *request.MCPToolInfo {
+func campusManagedMCP(toolParamsList []*request.MCPToolInfo) *request.MCPToolInfo {
 	if config.GetConfig().BffServer == nil {
 		return nil
 	}
 	for _, info := range toolParamsList {
-		if info != nil && isExactCampusStudentMCPURL(info.URL, config.GetConfig().BffServer.Endpoint) {
+		if info != nil && campusMCPKindForURL(info.URL, config.GetConfig().BffServer.Endpoint) != "" {
 			return info
 		}
 	}

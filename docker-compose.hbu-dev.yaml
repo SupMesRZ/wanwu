@@ -20,9 +20,14 @@ services:
   agent-service:
     volumes:
       - ./bin/${WANWU_ARCH}/agent-service:/app/bin/agent-service:ro
+      - ./configs/microservice/agent-service/configs/config.yaml:/app/configs/microservice/agent-service/configs/config.yaml:ro
 
   mcp-service:
     volumes:
       - ./bin/${WANWU_ARCH}/mcp-service:/app/bin/mcp-service:ro
     environment:
       SERVER_API_BASE_URL: http://bff-service:6667
+
+  workflow:
+    volumes:
+      - ../wanwu-workflow/wanwu-backend/bin/${WANWU_ARCH}/workflow-wanwu:/app/bin/workflow-wanwu:ro
