@@ -1,0 +1,6 @@
+version: "2.4"
+
+services:
+  workflow:
+    volumes:
+      - ./bin/${WANWU_ARCH}/workflow-wanwu:/app/bin/workflow-wanwu:ro

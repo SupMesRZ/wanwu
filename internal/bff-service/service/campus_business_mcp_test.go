@@ -24,20 +24,22 @@ func TestCampusBusinessToolsAndSharedAdjustmentWorkflow(t *testing.T) {
 		}
 	}
 	flows := campusWorkflowDefinitions()
-	if len(flows) != 4 || flows[2].code != campusWorkflowTeacherCode || flows[3].code != campusWorkflowAcademicCode {
+	if len(flows) != 5 || flows[3].code != campusWorkflowTeacherCode || flows[4].code != campusWorkflowAcademicCode {
 		t.Fatalf("managed workflows missing: %+v", flows)
 	}
 	expectedNodes := map[string]map[string]string{
-		campusWorkflowLeaveCode:    {"解析请假请求": "5", "查询已有请假": "1009", "最终确认提交": "30", "提交请假申请": "1009"},
-		campusWorkflowProbeCode:    {"记录可信身份摘要": "5", "等待用户确认": "30", "读取本人课表": "1009"},
-		campusWorkflowTeacherCode:  {"整理申请参数": "5", "用户明确确认后": "30", "确认校验": "5", "MCP提交": "1009", "待审批": "5"},
-		campusWorkflowAcademicCode: {"查询申请": "1009", "检查教务权限": "5", "审批": "1009", "状态更新": "5"},
+		campusWorkflowLeaveCode:         {"解析请假请求": "5", "确认提交校验": "5", "查询已有请假": "1009", "提交请假申请": "1009"},
+		campusWorkflowCompleteLeaveCode: {"确认销假申请": "5", "销假": "1009"},
+		campusWorkflowProbeCode:         {"记录可信身份摘要": "5", "等待用户确认": "30", "读取本人课表": "1009"},
+		campusWorkflowTeacherCode:       {"整理申请参数": "5", "用户明确确认后": "30", "确认校验": "5", "MCP提交": "1009", "待审批": "5"},
+		campusWorkflowAcademicCode:      {"查询申请": "1009", "检查教务权限": "5", "审批": "1009", "状态更新": "5"},
 	}
 	expectedMCPTools := map[string]map[string]struct{}{
-		campusWorkflowLeaveCode:    toolSet("query_my_leave_records", "query_my_schedule", "create_leave_application"),
-		campusWorkflowProbeCode:    toolSet("query_my_schedule"),
-		campusWorkflowTeacherCode:  toolSet("query_my_teaching_classes", "query_my_teaching_schedule", "query_available_classrooms", "create_course_adjustment_request"),
-		campusWorkflowAcademicCode: toolSet("query_pending_adjustment_requests", "review_course_adjustment_request"),
+		campusWorkflowLeaveCode:         toolSet("query_my_leave_records", "query_my_schedule", "create_leave_application"),
+		campusWorkflowCompleteLeaveCode: toolSet("complete_leave_application"),
+		campusWorkflowProbeCode:         toolSet("query_my_schedule"),
+		campusWorkflowTeacherCode:       toolSet("query_my_teaching_classes", "query_my_teaching_schedule", "query_available_classrooms", "create_course_adjustment_request"),
+		campusWorkflowAcademicCode:      toolSet("query_pending_adjustment_requests", "review_course_adjustment_request"),
 	}
 	for _, flow := range flows {
 		schema, err := buildCampusWorkflowSchema(flow)
@@ -67,6 +69,9 @@ func TestCampusBusinessToolsAndSharedAdjustmentWorkflow(t *testing.T) {
 		}
 		if len(graph.Edges) != len(graph.Nodes)-1 {
 			t.Fatalf("%s graph is not connected", flow.code)
+		}
+		if flow.code == campusWorkflowLeaveCode && (strings.Contains(schema, `"type":"30"`) || !strings.Contains(schema, `"name":"confirmed","required":true`) || !strings.Contains(schema, `"blockID":"100001","name":"confirmed","source":"block-output"`) || strings.Contains(schema, `"content":true`)) {
+			t.Fatalf("leave workflow must require caller confirmation without pausing: %s", schema)
 		}
 		actual := make(map[string]string, len(graph.Nodes))
 		actualMCPTools := make(map[string]struct{})

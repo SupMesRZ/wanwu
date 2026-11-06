@@ -1,0 +1,60 @@
+{
+  "display": {
+    "width": 192,
+    "height": 192,
+    "dpr": 2.0
+  },
+  "requiredCell": {
+    "width": 384,
+    "height": 384
+  },
+  "frames": 1,
+  "texture": {
+    "maxSize": 4096,
+    "columnsPerSheet": 10,
+    "rowsPerSheet": 10,
+    "framesPerSheet": 100,
+    "sheetCount": 1
+  },
+  "decodedFrameMemoryMiB": 0.6,
+  "sourceCheck": {
+    "width": 384,
+    "height": 384,
+    "required_width": 384,
+    "required_height": 384,
+    "width_ratio": 1.0,
+    "height_ratio": 1.0,
+    "passes": true
+  },
+  "cellCheck": {
+    "width": 384,
+    "height": 384,
+    "required_width": 384,
+    "required_height": 384,
+    "width_ratio": 1.0,
+    "height_ratio": 1.0,
+    "passes": true
+  },
+  "temporalCheck": null,
+  "driver": "time",
+  "parameterSpace": "circular",
+  "timeControl": "autonomous",
+  "access": "sequential",
+  "backgroundOwner": "page",
+  "delivery": {
+    "selected": "alpha-atlas",
+    "reasonCodes": ["small-asset-fits-atlas-budget"],
+    "atlasWithinBudget": true,
+    "thresholds": {
+      "atlasMaxSheets": 1,
+      "atlasMaxDecodedMemoryMiB": 192.0,
+      "linearVideoMinFrames": 180
+    }
+  },
+  "runtime": {
+    "renderer": "css-alpha-atlas",
+    "controller": "autonomous-playback"
+  },
+  "failures": [],
+  "passes": true
+}

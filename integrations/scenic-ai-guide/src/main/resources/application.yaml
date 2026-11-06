@@ -1,0 +1,242 @@
+# yaml-language-server: $schema=https://json.schemastore.org/spring-boot.json
+
+spring:
+  application:
+    # 应用名称，用于 Spring Boot Admin、日志标识等
+    name: scenic-ai-guide
+  profiles:
+    # 默认 dev，部署时用环境变量 SPRING_PROFILES_ACTIVE 覆盖
+    # dev profile 会启用短信 mock、验证码明文返回、跳过短信限流，生产必须切换
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # 文件上传：ASR 按住说话的 WAV（16k 单声道约 32KB/s），10MB 覆盖 5 分钟
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
+  # 数据库配置
+  datasource:
+    # MySQL 连接 URL，缺省值指向本地开发库
+    url: ${DB_URL:jdbc:mysql://120.26.20.226:3306/group_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:group_user}
+    password: ${DB_PASSWORD:J3al5hu4R2JYsD04nX5hl85dbPzPSA7a}
+    # MySQL 8 驱动类名
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      # 连接池名称，便于监控识别
+      pool-name: scenic-ai-guide-hikari
+      # 连接池最大活跃连接数
+      maximum-pool-size: 10
+      # 连接池最小空闲连接数
+      minimum-idle: 1
+      # 获取连接最大等待时间（毫秒）
+      connection-timeout: 30000
+      # 初始化失败时的重试超时，-1 表示无限重试直到成功
+      initialization-fail-timeout: -1
+
+  # Redis 配置
+  data:
+    redis:
+      # Redis 服务地址
+      host: ${REDIS_HOST:localhost}
+      # Redis 服务端口
+      port: ${REDIS_PORT:6379}
+      # Redis 认证密码，无密码时留空
+      password: ${REDIS_PASSWORD:}
+      # Redis 逻辑数据库索引，默认 0
+      database: ${REDIS_DB:0}
+      # 连接超时时间
+      timeout: 5000ms
+      lettuce:
+        pool:
+          # 连接池最大活跃连接数
+          max-active: 8
+          # 连接池最大空闲连接数
+          max-idle: 8
+          # 连接池最小空闲连接数
+          min-idle: 0
+
+  # Spring AI 配置
+  ai:
+    model:
+      # 启用 OpenAI 兼容 ChatModel 自动装配
+      # 无 LLM 密钥的演示部署设为 none（APP_AI_CHAT_MODEL=none），
+      # 此时 API_KEY_CHAT 不再被要求，问答降级为检索证据直出
+      chat: ${APP_AI_CHAT_MODEL:openai}
+      # 启用 OpenAI 兼容 EmbeddingModel 自动装配
+      # 同上，无密钥演示部署可设 none（APP_AI_EMBEDDING_MODEL=none），向量检索同步不可用
+      embedding: ${APP_AI_EMBEDDING_MODEL:openai}
+      audio:
+        # 当前阶段不使用 Spring AI 语音合成，避免创建 OpenAiAudioSpeechModel 时要求全局 api-key
+        speech: none
+        # 当前阶段不使用 Spring AI 语音识别，ASR/TTS 后续由 digitalhuman 域单独接入
+        transcription: none
+      # 当前阶段不使用 Spring AI 图像生成
+      image: none
+      # 当前阶段不使用 Spring AI 内容审核
+      moderation: none
+    openai:
+      # Chat OpenAI 兼容接口基础地址，Spring AI 默认拼接 /v1/chat/completions
+      base-url: https://llm-ty8i6j9dj1kd3f2z.cn-beijing.maas.aliyuncs.com/compatible-mode
+      chat:
+        # 对话模型专用 API Key，与 embedding 隔离
+        api-key: ${API_KEY_CHAT}
+        options:
+          # 默认对话模型，所有对话场景统一走此模型
+          model: qwen3.6-flash
+          # 采样温度，值越高输出越随机，0.7 为均衡设置
+          temperature: 0.7
+      embedding:
+        # 向量模型专用端点
+        base-url: https://dashscope.aliyuncs.com/compatible-mode
+        # 向量模型专用 API Key
+        api-key: ${API_KEY_EMBEDDING}
+        options:
+          # 向量模型，用于文本向量化。百炼 OpenAI 兼容接口支持 text-embedding-v4/v3/v2/v1
+          model: text-embedding-v4
+
+# 服务器配置
+server:
+  # 后端服务监听端口
+  port: 8086
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  # Mapper XML 文件扫描路径
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    # 自动将下划线命名映射为驼峰命名
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      # 逻辑删除字段名
+      logic-delete-field: deleted
+      # 逻辑删除标记值（已删除 = 1）
+      logic-delete-value: 1
+      # 逻辑未删除标记值（未删除 = 0）
+      logic-not-delete-value: 0
+
+# Qdrant 向量数据库配置
+qdrant:
+  # Qdrant 服务地址（纯 host，不含协议前缀）
+  host: ${QDRANT_HOST:qdrant.huohuospace.cn}
+  # Qdrant gRPC 端口（默认 6333 为明文，6334 为 TLS）
+  port: ${QDRANT_GRPC_PORT:6334}
+  # API Key，如需认证则配置环境变量 QDRANT_API_KEY，留空表示无认证
+  api-key: ${QDRANT_API_KEY:yzweydmPuX5M8hHKMTOONirHKpchu6fY0vRyjbF1R0b1Nr78}
+  # 是否启用 TLS，false 表示明文连接
+  use-tls: ${QDRANT_USE_TLS:false}
+  # 请求超时（秒），默认 10 秒
+  timeout-seconds: ${QDRANT_TIMEOUT_SECONDS:10}
+  # 默认 Collection 名称，存储景区知识向量
+  collection-name: ${QDRANT_COLLECTION:scenic_knowledge}
+
+# SpringDoc OpenAPI（生产环境默认关闭）
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# 阿里云配置
+# JWT 密钥（必须配置，仅在开发环境提供默认值）
+security:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-key-must-be-changed-in-production-env}
+
+# 应用配置项（兜底默认值，数据库 sys_config 初始化后优先走数据库）
+app:
+  # 坐标系统配置
+  coordinate:
+    # 对外 API 默认返回的坐标系: wgs84 / gcj02 / bd09
+    # 默认 gcj02（高德地图直接使用）
+    default-system: gcj02
+
+  config:
+    # ===== 操作日志配置 =====
+    # 是否记录后台操作日志
+    ops-operation-log-enabled: true
+    # 操作日志保留天数，超期由每日定时任务物理删除
+    ops-operation-log-retention-days: 90
+    # 单条日志记录的请求参数最大长度（字符），超出截断
+    ops-operation-log-param-max-length: 2000
+
+    # ===== 接口限流配置 =====
+    # 是否启用接口限流（Redis 固定窗口计数，Redis 故障时放行）
+    ops-rate-limit-enabled: true
+    # 限流规则 JSON 数组：name=规则名 pattern=Ant路径模式 methods=HTTP方法（空=不限）
+    # limit=窗口内最大请求数 windowSeconds=窗口秒数 enabled=是否启用
+    ops-rate-limit-rules: >
+      [{"name":"auth","pattern":"/api/v1/system/auth/**","methods":["POST"],"limit":10,"windowSeconds":60,"enabled":true},
+      {"name":"tourist-write","pattern":"/api/v1/tourist/**","methods":["POST"],"limit":30,"windowSeconds":60,"enabled":true},
+      {"name":"admin-write","pattern":"/api/v1/admin/**","methods":["POST","PUT","PATCH","DELETE"],"limit":60,"windowSeconds":60,"enabled":true}]
+
+# ===== qa 域配置 =====
+qa:
+  config:
+    # RAG 召回文档数
+    qa-rag-top-k: 5
+    # 向量相似度阈值
+    qa-rag-similarity-threshold: 0.7
+    # 上下文最大轮数
+    qa-context-max-rounds: 12
+    # 关闭模型思考模式的指令，属模型方言：Qwen 系列用 /no_think
+    # 换用不识别该指令的模型时置空，避免指令作为无意义文本混入系统提示词
+    qa-model-think-directive: /no_think
+    # 向量检索增强总开关，默认关闭：关闭时部署不需要 Qdrant，检索为纯关键词
+    qa-vector-enabled: false
+    # Qdrant 集合名
+    qa-vector-collection: qa_chunks
+    # 向量维度，需与 embedding 模型输出一致（text-embedding-v4 默认 1024）
+    qa-vector-dimension: 1024
+
+# ===== digitalhuman 域配置 =====
+dh:
+  config:
+    # TTS 缓存有效期（小时）
+    dh-tts-cache-ttl-hours: 72
+    # TTS 供应商，mock 生成静音 WAV 供无密钥演示
+    dh-tts-provider: aliyun
+    # ASR 供应商，mock 返回空识别结果供无密钥演示
+    dh-asr-provider: aliyun
+
+# ===== route 域配置 =====
+route:
+  config:
+    # Dijkstra 距离权重
+    route-dijkstra-weight-distance: 0.5
+    # Dijkstra 耗时权重
+    route-dijkstra-weight-duration: 0.3
+    # Dijkstra 拥挤度权重
+    route-dijkstra-weight-crowd: 0.2
+    # AI 路线推荐偏好标签
+    route-ai-prefer-tags: ""
+    # 预制路线最多游览目标数
+    route-max-targets: 15
+
+# ===== analytics 域配置 =====
+analytics:
+  config:
+    # 情感分析批处理大小
+    analytics-sentiment-batch-size: 100
+
+aliyun:
+  # OSS 对象存储
+  oss:
+    # OSS Endpoint，格式如 oss-cn-hangzhou.aliyuncs.com
+    endpoint: ${ALIYUN_OSS_ENDPOINT:oss-cn-beijing.aliyuncs.com}
+    # OSS Bucket 名称
+    bucket-name: ${ALIYUN_OSS_BUCKET:scenic-ai-guide}
+    # 阿里云 AccessKey ID
+    access-key-id: ${ALIYUN_ACCESS_KEY_ID:}
+    # 阿里云 AccessKey Secret
+    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET:}
+  # NLS 智能语音交互（ASR/TTS）
+  nls:
+    # NLS 应用 Key，在智能语音交互控制台获取（非敏感，可配置在文件中）
+    app-key: ${NLS_APP_KEY:gD5WPiynv1Oaeznd}
+    # NLS 阿里云 AccessKey ID，复用全局 AK
+    access-key-id: ${ALIYUN_ACCESS_KEY_ID:}
+    # NLS 阿里云 AccessKey Secret，复用全局 SK
+    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET:}

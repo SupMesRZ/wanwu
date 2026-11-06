@@ -1,9 +1,11 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	net_url "net/url"
 	"strings"
 	"sync"
 	"time"
@@ -90,7 +92,7 @@ func ValidateCampusWorkflowResume(runID, code string, identity CampusBusinessExe
 	return ValidateCampusWorkflowExecution(code, identity)
 }
 
-func RunCampusWorkflow(ctx *gin.Context, code string, identity CampusBusinessExecutionIdentity, conversationID string, input map[string]any) (*response.CozeWorkflowTestRunData, error) {
+func RunCampusWorkflow(ctx *gin.Context, code string, identity CampusBusinessExecutionIdentity, conversationID string, input map[string]any) (any, error) {
 	if err := ValidateCampusWorkflowExecution(code, identity); err != nil {
 		return nil, err
 	}
@@ -113,7 +115,92 @@ func RunCampusWorkflow(ctx *gin.Context, code string, identity CampusBusinessExe
 	if err := BindCampusWorkflowRun(ret.Data.ExecuteID, code, identity, conversationID); err != nil {
 		return nil, err
 	}
+	if code == campusWorkflowLeaveCode || code == campusWorkflowCompleteLeaveCode {
+		return waitCampusLeaveWorkflow(ctx, workflowID, identity.OrgID, ret.Data.ExecuteID)
+	}
 	return ret.Data, nil
+}
+
+func waitCampusLeaveWorkflow(ctx *gin.Context, workflowID, orgID, executeID string) (map[string]string, error) {
+	pollCtx, cancel := context.WithTimeout(ctx.Request.Context(), time.Minute)
+	defer cancel()
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	processURL, _ := net_url.JoinPath(config.Cfg().Workflow.Endpoint, config.Cfg().Workflow.GetProcessUri)
+
+	for {
+		select {
+		case <-pollCtx.Done():
+			return nil, errors.New("请假申请处理超时，尚未确认提交结果，请稍后查询请假记录")
+		case <-ticker.C:
+			ret := &response.CozeGetWorkflowProcessResponse{}
+			resp, err := trace_util.NewResty(ctx).R().
+				SetContext(pollCtx).
+				SetHeaders(workflowHttpReqHeader(ctx)).
+				SetQueryParams(map[string]string{"execute_id": executeID, "workflow_id": workflowID, "space_id": orgID}).
+				SetResult(ret).
+				Get(processURL)
+			if err != nil || resp.StatusCode() >= http.StatusMultipleChoices || ret.Code != 0 || ret.Data == nil {
+				return nil, errors.New("请假申请状态查询失败，尚未确认提交结果，请稍后查询请假记录")
+			}
+			switch ret.Data.ExecuteStatus {
+			case 0, 1:
+				continue
+			case 2:
+				for _, node := range ret.Data.NodeResults {
+					if node.NodeType == "End" && node.NodeId == "900001" {
+						return campusLeaveWorkflowResult(node.Output, executeID)
+					}
+				}
+				return nil, errors.New("请假申请未完成：工作流未返回最终结果")
+			case 3:
+				return nil, errors.New("请假申请未提交：工作流执行失败")
+			case 4:
+				return nil, errors.New("请假申请未提交：工作流已取消")
+			default:
+				return nil, errors.New("请假申请状态异常，尚未确认提交结果")
+			}
+		}
+	}
+}
+
+func campusLeaveWorkflowResult(output, executeID string) (map[string]string, error) {
+	if strings.Contains(output, "completed") || strings.Contains(output, "已销假") {
+		start := strings.Index(output, "LEV-")
+		if start < 0 {
+			return nil, errors.New("销假未完成：未返回申请编号")
+		}
+		end := start + len("LEV-")
+		for end < len(output) && (output[end] == '-' || output[end] >= '0' && output[end] <= '9') {
+			end++
+		}
+		return map[string]string{"requestId": output[start:end], "status": "completed", "workflowExecuteId": executeID}, nil
+	}
+	switch {
+	case strings.Contains(output, "LEAVE_TIME_CONFLICT"):
+		return nil, errors.New("请假申请未提交：请假时间与已有申请冲突")
+	case strings.Contains(output, "invalid_leave_type"):
+		return nil, errors.New("请假申请未提交：请假类型只能是病假、事假或公假")
+	case strings.Contains(output, "invalid_start_time"), strings.Contains(output, "invalid_time_range"):
+		return nil, errors.New("请假申请未提交：请假时间格式或范围不正确")
+	case strings.Contains(output, "invalid_leave_request"):
+		return nil, errors.New("请假申请未提交：请假信息不完整或尚未确认")
+	case strings.Contains(output, "execution_identity_missing"):
+		return nil, errors.New("请假申请未提交：登录身份失效，请重新登录")
+	case strings.Contains(output, "internal_error"):
+		return nil, errors.New("请假申请未提交：系统处理失败，请稍后重试")
+	case strings.Contains(output, `"error"`), strings.Contains(output, `\"error\"`):
+		return nil, errors.New("请假申请未提交：工作流返回错误")
+	}
+	start := strings.Index(output, "LEV-")
+	if start < 0 {
+		return nil, errors.New("请假申请未完成：未生成申请编号")
+	}
+	end := start + len("LEV-")
+	for end < len(output) && (output[end] == '-' || output[end] >= '0' && output[end] <= '9') {
+		end++
+	}
+	return map[string]string{"requestId": output[start:end], "status": "pending", "workflowExecuteId": executeID}, nil
 }
 
 func campusWorkflowInput(input map[string]any) map[string]string {
@@ -160,14 +247,14 @@ func campusManagedWorkflowID(ctx *gin.Context, orgID, code string) (string, erro
 	if err := ensureCampusWorkflows(ctx, orgID); err != nil {
 		return "", err
 	}
-	list, err := ListWorkflow(ctx, orgID, "", "workflow")
+	list, err := ListWorkflowInOrg(ctx, orgID, "", "workflow")
 	if err != nil {
 		return "", err
 	}
-	for _, workflow := range list.Workflows {
-		for _, managed := range campusWorkflowDefinitions() {
-			if managed.code == code && workflow.Desc == managed.desc && campusWorkflowNameMatches(workflow.Name, managed.name) {
-				return workflow.WorkflowId, nil
+	for _, managed := range campusWorkflowDefinitions() {
+		if managed.code == code {
+			if workflowID := campusWorkflowID(list.Workflows, managed); workflowID != "" {
+				return workflowID, nil
 			}
 		}
 	}

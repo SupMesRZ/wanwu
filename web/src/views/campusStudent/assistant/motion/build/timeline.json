@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "fps": 60,
+  "frameDuration": 0.016667,
+  "initialState": "idle",
+  "states": [
+    { "id": "idle", "hold": 0 },
+    { "id": "happy", "hold": 3.4 },
+    { "id": "curious", "hold": 8.2 }
+  ],
+  "segments": [
+    {
+      "id": "idle-happy",
+      "from": "idle",
+      "to": "happy",
+      "start": 0,
+      "hold": 3.4,
+      "endExclusive": 4.8,
+      "curve": { "type": "constant", "rate": 1 }
+    },
+    {
+      "id": "happy-curious",
+      "from": "happy",
+      "to": "curious",
+      "start": 4.8,
+      "hold": 8.2,
+      "endExclusive": 9.583333,
+      "curve": { "type": "constant", "rate": 1 }
+    },
+    {
+      "id": "curious-idle",
+      "from": "curious",
+      "to": "idle",
+      "start": 9.583333,
+      "hold": 9.583333,
+      "endExclusive": 9.6,
+      "curve": { "type": "constant", "rate": 1 }
+    }
+  ],
+  "background": {
+    "loopDuration": 9.6,
+    "driver": "time",
+    "layers": ["soft-glow", "light-ribbon", "particles"],
+    "amplitude": "low"
+  }
+}

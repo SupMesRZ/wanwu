@@ -13,6 +13,29 @@ func resetCampusLeavesForTest() {
 	campusLeaves.next = 0
 }
 
+func TestCampusStudentLeaveRecordsDoNotFallBackToExamples(t *testing.T) {
+	resetCampusLeavesForTest()
+	defer resetCampusLeavesForTest()
+	records, err := GetCampusStudentLeaveRecords("org-1", "student-a")
+	if err != nil || records == nil || len(records) != 0 {
+		t.Fatalf("expected an empty list without example records, got %+v, %v", records, err)
+	}
+	app, err := CreateCampusLeave(CampusBusinessExecutionIdentity{UserID: "student-a", OrgID: "org-1", ActualRole: CampusRoleStudent}, "exec-records", "2026-09-07T14:00:00+08:00", "2026-09-07T17:00:00+08:00", "病假", "身体不舒服", "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	records, err = GetCampusStudentLeaveRecords("org-1", "student-a")
+	if err != nil || len(records) != 1 || records[0].ApplicationNo != app.RequestID {
+		t.Fatalf("expected the stored application, got %+v, %v", records, err)
+	}
+	for _, owner := range [][2]string{{"org-1", "student-b"}, {"org-2", "student-a"}} {
+		records, err = GetCampusStudentLeaveRecords(owner[0], owner[1])
+		if err != nil || len(records) != 0 {
+			t.Fatalf("another owner received leave records: %+v, %v", records, err)
+		}
+	}
+}
+
 func TestCampusLeaveStoreIdempotencyAndIsolation(t *testing.T) {
 	resetCampusLeavesForTest()
 	a := CampusBusinessExecutionIdentity{UserID: "student-a", OrgID: "org-1", ActualRole: CampusRoleStudent}
@@ -83,5 +106,25 @@ func TestTeacherReviewsCampusLeave(t *testing.T) {
 	}
 	if _, err := ReviewCampusLeave(teacher, app.RequestID, "reject", ""); !errors.Is(err, errCampusLeaveNotPending) {
 		t.Fatalf("second review should fail, got %v", err)
+	}
+}
+
+func TestStudentCompletesApprovedLeave(t *testing.T) {
+	resetCampusLeavesForTest()
+	student := CampusBusinessExecutionIdentity{UserID: "student-a", OrgID: "org-1", ActualRole: CampusRoleStudent}
+	app, err := CreateCampusLeave(student, "exec-complete", "2026-09-10T00:00:00+08:00", "2026-09-11T00:00:00+08:00", "事假", "返校", "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	teacher := CampusBusinessExecutionIdentity{UserID: "teacher-a", OrgID: "org-1", ActualRole: CampusRoleTeacher}
+	if _, err := ReviewCampusLeave(teacher, app.RequestID, "approve", "同意"); err != nil {
+		t.Fatal(err)
+	}
+	completed, err := CompleteCampusLeave(student, app.RequestID)
+	if err != nil || completed.Status != "completed" {
+		t.Fatalf("completion failed: %+v %v", completed, err)
+	}
+	if _, err := CompleteCampusLeave(student, app.RequestID); !errors.Is(err, errCampusLeaveNotApproved) {
+		t.Fatalf("duplicate completion should fail, got %v", err)
 	}
 }

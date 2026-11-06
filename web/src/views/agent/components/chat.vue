@@ -76,6 +76,7 @@
             :hasHistory="hasHistory"
             :visible-clear-history="visibleClearHistory"
             :visible-upload="visibleUpload"
+            :visible-voice="visibleVoice"
             :maxImageSize="maxImageSize"
             :maxPicNum="maxPicNum"
             :maxFileNum="maxFileNum"
@@ -84,6 +85,7 @@
             @setSessionStatus="setSessionStatus"
             @clearHistory="handleClearHistory"
             @inputHeightChange="handleInputHeightChange"
+            @voice-state="$emit('voice-state', $event)"
           />
           <!-- 版权信息 -->
           <div v-if="appUrlInfo" class="appUrlInfo">
@@ -188,6 +190,10 @@ export default {
     visibleUpload: {
       type: Boolean,
       default: true,
+    },
+    visibleVoice: {
+      type: Boolean,
+      default: false,
     },
     maxImageSize: {
       type: [Number, String],

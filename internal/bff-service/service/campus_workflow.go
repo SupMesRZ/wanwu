@@ -10,6 +10,7 @@ import (
 
 	errs "github.com/UnicomAI/wanwu/api/proto/err-code"
 	"github.com/UnicomAI/wanwu/internal/bff-service/config"
+	"github.com/UnicomAI/wanwu/internal/bff-service/model/response"
 	"github.com/UnicomAI/wanwu/pkg/constant"
 	grpc_util "github.com/UnicomAI/wanwu/pkg/grpc-util"
 	trace_util "github.com/UnicomAI/wanwu/pkg/trace-util"
@@ -17,10 +18,11 @@ import (
 )
 
 const (
-	campusWorkflowProbeCode    = "campus_workflow_identity_probe"
-	campusWorkflowTeacherCode  = "teacher_course_adjustment"
-	campusWorkflowAcademicCode = "academic_course_adjustment_approval"
-	campusWorkflowLeaveCode    = "student_leave_full_process"
+	campusWorkflowProbeCode         = "campus_workflow_identity_probe"
+	campusWorkflowTeacherCode       = "teacher_course_adjustment"
+	campusWorkflowAcademicCode      = "academic_course_adjustment_approval"
+	campusWorkflowLeaveCode         = "student_leave_full_process"
+	campusWorkflowCompleteLeaveCode = "student_leave_completion_workflow"
 )
 
 type campusWorkflowStage struct {
@@ -51,16 +53,18 @@ func campusWorkflowDefinitions() []campusWorkflowDefinition {
 		{code: campusWorkflowLeaveCode, name: "学生智能请假与销假全流程-正式", desc: "student_leave_full_process", allowedRole: CampusRoleStudent, allowWrite: true, requiredExecutionIdentity: true, stages: []campusWorkflowStage{
 			{title: "解析请假请求", description: "从用户请求整理时间、类型和原因，身份只来自执行上下文。", kind: "code"},
 			{title: "校验必要字段", description: "检查请假时间、类型和原因。", kind: "code"},
+			{title: "确认提交校验", description: "只有学生已在对话中明确确认才允许继续。", kind: "confirmed", code: "async def main(args: Args) -> Output:\n    if args.params.get(\"input\") is not True:\n        raise ValueError(\"未确认提交，本次申请不会写入\")\n    return {\"output\": \"已确认提交\"}"},
 			{title: "查询已有请假", description: "读取当前学生本人请假记录。", kind: "mcp", toolName: "query_my_leave_records"},
 			{title: "检查时间冲突", description: "发现重叠申请时终止提交。", kind: "code"},
 			{title: "查询请假期间课程", description: "读取当前学生本人课程影响。", kind: "mcp", toolName: "query_my_schedule"},
-			{title: "确认课程影响", description: "向学生展示影响课程并等待继续或取消。", kind: "input"},
-			{title: "课程影响确认校验", description: "只有明确继续才进入申请摘要。", kind: "code", code: "async def main(args: Args) -> Output:\n    confirmation = str(args.params.get(\"input\", \"\")).strip()\n    if confirmation not in [\"继续\", \"继续申请\", \"是\"]:\n        raise ValueError(\"已取消本次请假申请\")\n    return {\"output\": \"已确认继续\"}"},
 			{title: "生成请假摘要", description: "汇总时间、类型、原因和课程影响。", kind: "code"},
-			{title: "最终确认提交", description: "只有明确确认才允许写入。", kind: "input"},
-			{title: "最终确认校验", description: "仅接受明确的确认提交指令。", kind: "code", code: "async def main(args: Args) -> Output:\n    confirmation = str(args.params.get(\"input\", \"\")).strip()\n    if confirmation not in [\"确认\", \"确认提交\", \"是，提交\"]:\n        raise ValueError(\"未确认提交，本次申请不会写入\")\n    return {\"output\": \"已确认提交\"}"},
 			{title: "提交请假申请", description: "调用受 Workflow 保护的 create_leave_application。", kind: "mcp", toolName: "create_leave_application"},
 			{title: "返回申请结果", description: "返回申请编号和 pending 状态。", kind: "code"},
+		}},
+		{code: campusWorkflowCompleteLeaveCode, name: "学生销假流程-正式", desc: "student_leave_completion", allowedRole: CampusRoleStudent, allowWrite: true, requiredExecutionIdentity: true, stages: []campusWorkflowStage{
+			{title: "确认销假申请", description: "只有学生明确确认销假才允许继续。", kind: "confirmed", code: "async def main(args: Args) -> Output:\n    if args.params.get(\"input\") is not True:\n        raise ValueError(\"未确认销假，本次操作不会写入\")\n    return {\"output\": \"已确认销假\"}"},
+			{title: "销假", description: "调用受 Workflow 保护的 complete_leave_application。", kind: "mcp", toolName: "complete_leave_application"},
+			{title: "返回销假结果", description: "返回申请编号和 completed 状态。", kind: "code"},
 		}},
 		{
 			code: campusWorkflowProbeCode, name: "Campus Workflow 身份探针",
@@ -120,7 +124,7 @@ func ensureCampusWorkflows(ctx *gin.Context, orgID string) error {
 		return nil
 	}
 
-	listed, err := ListWorkflow(ctx, orgID, "", constant.AppTypeWorkflow)
+	listed, err := ListWorkflowInOrg(ctx, orgID, "", constant.AppTypeWorkflow)
 	if err != nil {
 		return err
 	}
@@ -129,13 +133,7 @@ func ensureCampusWorkflows(ctx *gin.Context, orgID string) error {
 		if err != nil {
 			return err
 		}
-		var existingID string
-		for _, workflow := range listed.Workflows {
-			if workflow.Desc == definition.desc && campusWorkflowNameMatches(workflow.Name, definition.name) {
-				existingID = workflow.WorkflowId
-				break
-			}
-		}
+		existingID := campusWorkflowID(listed.Workflows, definition)
 		if existingID != "" {
 			if err := saveCampusWorkflowSchema(ctx, orgID, existingID, schema); err != nil {
 				return err
@@ -159,6 +157,20 @@ func campusWorkflowNameMatches(name, managedName string) bool {
 	suffix, ok := strings.CutPrefix(name, managedName+"_")
 	n, err := strconv.ParseUint(suffix, 10, 64)
 	return ok && err == nil && n > 0
+}
+
+func campusWorkflowID(workflows []*response.CozeWorkflowListDataWorkflow, definition campusWorkflowDefinition) string {
+	for _, workflow := range workflows {
+		if workflow.Desc == definition.desc && workflow.Name == definition.name {
+			return workflow.WorkflowId
+		}
+	}
+	for _, workflow := range workflows {
+		if workflow.Desc == definition.desc && campusWorkflowNameMatches(workflow.Name, definition.name) {
+			return workflow.WorkflowId
+		}
+	}
+	return ""
 }
 
 func buildCampusWorkflowSchema(definition campusWorkflowDefinition) (string, error) {
@@ -195,7 +207,9 @@ func campusStartNode(workflowCode string) map[string]any {
 			map[string]any{"type": "string", "name": "remark", "required": false, "description": "审批意见"},
 		)
 	} else if workflowCode == campusWorkflowLeaveCode {
-		outputs = append(outputs, map[string]any{"type": "string", "name": "startTime", "required": true, "description": "开始时间 RFC3339"}, map[string]any{"type": "string", "name": "endTime", "required": true, "description": "结束时间 RFC3339"}, map[string]any{"type": "string", "name": "leaveType", "required": true, "description": "病假、事假或公假"}, map[string]any{"type": "string", "name": "reason", "required": true, "description": "请假原因"}, map[string]any{"type": "string", "name": "attachmentId", "required": false, "description": "附件编号"})
+		outputs = append(outputs, map[string]any{"type": "string", "name": "startTime", "required": true, "description": "开始时间 RFC3339"}, map[string]any{"type": "string", "name": "endTime", "required": true, "description": "结束时间 RFC3339"}, map[string]any{"type": "string", "name": "leaveType", "required": true, "description": "病假、事假或公假"}, map[string]any{"type": "string", "name": "reason", "required": true, "description": "请假原因"}, map[string]any{"type": "string", "name": "attachmentId", "required": false, "description": "附件编号"}, map[string]any{"type": "boolean", "name": "confirmed", "required": true, "description": "仅当学生已明确回复“确认提交”时传 true；未确认不得启动工作流"})
+	} else if workflowCode == campusWorkflowCompleteLeaveCode {
+		outputs = append(outputs, map[string]any{"type": "string", "name": "requestId", "required": true, "description": "已通过的请假申请编号"}, map[string]any{"type": "boolean", "name": "confirmed", "required": true, "description": "仅当学生已明确确认销假时传 true"})
 	}
 	return map[string]any{
 		"id": "100001", "type": "1", "meta": map[string]any{"position": map[string]int{"x": 80, "y": 0}},
@@ -210,6 +224,9 @@ func campusStageNode(workflowCode, id string, index int, stage campusWorkflowSta
 	meta := map[string]any{"position": map[string]int{"x": 440 + index*360, "y": 0}}
 	nodeMeta := map[string]string{"title": stage.title, "description": stage.description}
 	input := campusWorkflowRef(previousID, previousOutput, previousType)
+	if stage.kind == "confirmed" {
+		input = campusWorkflowRef("100001", "confirmed", "boolean")
+	}
 	switch stage.kind {
 	case "mcp":
 		nodeMeta["icon"], nodeMeta["subTitle"], nodeMeta["mainColor"] = "/api/static/icon/icon-MCP-v2.png", "MCP工具", "#FF811A"
@@ -227,7 +244,10 @@ func campusStageNode(workflowCode, id string, index int, stage campusWorkflowSta
 			ref := func(name string) map[string]any {
 				return map[string]any{"name": name, "input": campusWorkflowRef("100001", name, "string")}
 			}
-			parameters = []map[string]any{ref("startTime"), ref("endTime"), ref("leaveType"), ref("reason"), ref("attachmentId"), {"name": "confirmed", "input": campusWorkflowLiteral("boolean", true, 3)}}
+			parameters = []map[string]any{ref("startTime"), ref("endTime"), ref("leaveType"), ref("reason"), ref("attachmentId"), {"name": "confirmed", "input": campusWorkflowRef("100001", "confirmed", "boolean")}}
+		}
+		if workflowCode == campusWorkflowCompleteLeaveCode && stage.toolName == "complete_leave_application" {
+			parameters = []map[string]any{{"name": "requestId", "input": campusWorkflowRef("100001", "requestId", "string")}}
 		}
 		return map[string]any{
 			"id": id, "type": "1009", "meta": meta,
@@ -307,7 +327,9 @@ func campusMCPInputParameters(toolName string) []map[string]any {
 	case "review_course_adjustment_request":
 		return []map[string]any{parameter("requestId", "string"), parameter("decision", "string"), parameter("remark", "string")}
 	case "create_leave_application":
-		return []map[string]any{parameter("startTime", "string"), parameter("endTime", "string"), parameter("leaveType", "string"), parameter("reason", "string"), parameter("attachmentId", "string"), {"name": "confirmed", "input": campusWorkflowLiteral("boolean", true, 3)}}
+		return []map[string]any{parameter("startTime", "string"), parameter("endTime", "string"), parameter("leaveType", "string"), parameter("reason", "string"), parameter("attachmentId", "string"), parameter("confirmed", "boolean")}
+	case "complete_leave_application":
+		return []map[string]any{parameter("requestId", "string")}
 	default:
 		return []map[string]any{}
 	}

@@ -1,6 +1,10 @@
 package service
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/UnicomAI/wanwu/internal/bff-service/model/response"
+)
 
 func TestCampusWorkflowRegistryAndResumeIsolation(t *testing.T) {
 	teacher := CampusBusinessExecutionIdentity{UserID: "student-a", OrgID: "org-1", ActualRole: CampusRoleStudent}
@@ -57,5 +61,33 @@ func TestCampusWorkflowNameMatchesGeneratedSuffix(t *testing.T) {
 		if campusWorkflowNameMatches(name, managed) {
 			t.Fatalf("unmanaged workflow name accepted: %q", name)
 		}
+	}
+}
+
+func TestCampusWorkflowIDPrefersCanonicalName(t *testing.T) {
+	definition := campusWorkflowDefinitions()[0]
+	workflows := []*response.CozeWorkflowListDataWorkflow{
+		{WorkflowId: "duplicate", Name: definition.name + "_1", Desc: definition.desc},
+		{WorkflowId: "canonical", Name: definition.name, Desc: definition.desc},
+	}
+	if got := campusWorkflowID(workflows, definition); got != "canonical" {
+		t.Fatalf("selected %q, want canonical workflow", got)
+	}
+}
+
+func TestCampusLeaveWorkflowResult(t *testing.T) {
+	result, err := campusLeaveWorkflowResult(`[{"text":"{\"requestId\":\"LEV-20260915-004\",\"status\":\"pending\"}"}]`, "run-1")
+	if err != nil || result["requestId"] != "LEV-20260915-004" || result["status"] != "pending" {
+		t.Fatalf("unexpected successful result: %#v, %v", result, err)
+	}
+	if _, err := campusLeaveWorkflowResult(`[{"text":"{\"error\":{\"code\":\"LEAVE_TIME_CONFLICT\"}}"}]`, "run-2"); err == nil || err.Error() != "请假申请未提交：请假时间与已有申请冲突" {
+		t.Fatalf("time conflict was not reported: %v", err)
+	}
+	if _, err := campusLeaveWorkflowResult("{}", "run-3"); err == nil {
+		t.Fatal("missing application number was accepted")
+	}
+	result, err = campusLeaveWorkflowResult(`[{"text":"{\"requestId\":\"LEV-20260915-004\",\"status\":\"completed\"}"}]`, "run-4")
+	if err != nil || result["status"] != "completed" {
+		t.Fatalf("unexpected completion result: %#v, %v", result, err)
 	}
 }

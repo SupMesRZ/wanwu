@@ -354,28 +354,28 @@ export const opinionList = [
 export const reports = [
   {
     id: 'report-01',
-    name: '校园舆情日报（演示）',
+    name: '校园舆情日报',
     type: '舆情日报',
     generatedAt: '2026-08-13 09:00',
     status: '已生成',
   },
   {
     id: 'report-02',
-    name: '校园舆情周报（演示）',
+    name: '校园舆情周报',
     type: '舆情周报',
     generatedAt: '2026-08-11 09:00',
     status: '已生成',
   },
   {
     id: 'report-03',
-    name: '校园服务热点专题报告（演示）',
+    name: '校园服务热点专题报告',
     type: '专题报告',
     generatedAt: '2026-08-12 16:30',
     status: '草稿',
   },
   {
     id: 'report-04',
-    name: '新区宿舍维修事件研判报告（演示）',
+    name: '新区宿舍维修事件研判报告',
     type: '事件研判报告',
     generatedAt: '2026-08-13 14:30',
     status: '待生成',

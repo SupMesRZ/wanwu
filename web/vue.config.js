@@ -93,6 +93,7 @@ module.exports = {
       },
     },
     client: {
+      webSocketURL: 'auto://localhost:8080/ws',
       // 禁用错误覆盖层
       overlay: {
         warnings: false,

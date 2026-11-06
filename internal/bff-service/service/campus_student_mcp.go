@@ -185,7 +185,10 @@ func ServeCampusStudentMCP(resp http.ResponseWriter, req *http.Request) error {
 
 func campusStudentMCPTools() []campusStudentMCPTool {
 	defs := campusstudent.ToolDefinitions("")
-	defs = append(defs, campusstudent.ToolDefinition{Name: "create_leave_application", Description: "Submit a student leave application (workflow only)", Schema: `{"type":"object","properties":{"startTime":{"type":"string"},"endTime":{"type":"string"},"leaveType":{"type":"string"},"reason":{"type":"string"},"attachmentId":{"type":"string"},"confirmed":{"type":"boolean"}},"required":["startTime","endTime","leaveType","reason","confirmed"],"additionalProperties":false}`})
+	defs = append(defs,
+		campusstudent.ToolDefinition{Name: "create_leave_application", Description: "Submit a student leave application (workflow only)", Schema: `{"type":"object","properties":{"startTime":{"type":"string"},"endTime":{"type":"string"},"leaveType":{"type":"string"},"reason":{"type":"string"},"attachmentId":{"type":"string"},"confirmed":{"type":"boolean"}},"required":["startTime","endTime","leaveType","reason","confirmed"],"additionalProperties":false}`},
+		campusstudent.ToolDefinition{Name: "complete_leave_application", Description: "Mark an approved student leave as completed (workflow only)", Schema: `{"type":"object","properties":{"requestId":{"type":"string"}},"required":["requestId"],"additionalProperties":false}`},
+	)
 	tools := make([]campusStudentMCPTool, 0, len(defs))
 	for _, def := range defs {
 		var run func(CampusStudentExecutionIdentity, json.RawMessage) (any, *campusToolError)
@@ -202,11 +205,13 @@ func campusStudentMCPTools() []campusStudentMCPTool {
 			run = queryMyLearningSummary
 		case "create_leave_application":
 			run = createLeaveApplication
+		case "complete_leave_application":
+			run = completeLeaveApplication
 		}
 		var schema map[string]any
 		_ = json.Unmarshal([]byte(def.Schema), &schema)
 		var props map[string]any
-		if def.Name == "create_leave_application" {
+		if def.Name == "create_leave_application" || def.Name == "complete_leave_application" {
 			props = schema
 		} else {
 			props = schema["paths"].(map[string]any)["/"+def.Name].(map[string]any)["post"].(map[string]any)["requestBody"].(map[string]any)["content"].(map[string]any)["application/json"].(map[string]any)["schema"].(map[string]any)
@@ -240,6 +245,9 @@ func campusStudentToolHandler(run func(CampusStudentExecutionIdentity, json.RawM
 		if request.Name == "create_leave_application" && (!campusStudentWorkflowExecution(ctx) || campusStudentWorkflowCode(ctx) != campusWorkflowLeaveCode) {
 			return campusToolErrorResult("workflow_required", "This operation is only available inside the approved workflow"), nil
 		}
+		if request.Name == "complete_leave_application" && (!campusStudentWorkflowExecution(ctx) || campusStudentWorkflowCode(ctx) != campusWorkflowCompleteLeaveCode) {
+			return campusToolErrorResult("workflow_required", "This operation is only available inside the approved workflow"), nil
+		}
 		data, toolErr := run(identity, request.RawArguments)
 		if toolErr != nil {
 			return campusToolErrorResult(toolErr.Code, toolErr.Message), nil
@@ -265,6 +273,27 @@ func createLeaveApplication(identity CampusStudentExecutionIdentity, raw json.Ra
 	app, err := CreateCampusLeave(CampusBusinessExecutionIdentity{UserID: identity.UserID, OrgID: identity.OrgID, ActualRole: CampusRoleStudent}, identity.ExecutionID, args.StartTime, args.EndTime, args.LeaveType, args.Reason, args.AttachmentID, args.Confirmed)
 	if err != nil {
 		return nil, &campusToolError{Code: err.Error(), Message: "请假申请未提交"}
+	}
+	return app, nil
+}
+
+type completeLeaveArguments struct {
+	RequestID string `json:"requestId"`
+}
+
+func completeLeaveApplication(identity CampusStudentExecutionIdentity, raw json.RawMessage) (any, *campusToolError) {
+	args, err := decodeCampusToolArguments[completeLeaveArguments](raw)
+	if err != nil || args.RequestID == "" {
+		return nil, invalidCampusToolArguments()
+	}
+	app, err := CompleteCampusLeave(CampusBusinessExecutionIdentity{UserID: identity.UserID, OrgID: identity.OrgID, ActualRole: CampusRoleStudent}, args.RequestID)
+	if err != nil {
+		code := err.Error()
+		message := "销假未完成"
+		if errors.Is(err, errCampusLeaveNotApproved) {
+			code, message = "leave_request_not_approved", "只有已通过的请假才能销假"
+		}
+		return nil, &campusToolError{Code: code, Message: message}
 	}
 	return app, nil
 }

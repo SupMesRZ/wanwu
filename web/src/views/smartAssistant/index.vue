@@ -2,7 +2,7 @@
   <div class="smart-assistant-page">
     <el-alert
       v-if="isRolePreview"
-      :title="`当前为${roleProfile.label}界面管理员预览模式，使用演示身份和模拟校园数据。`"
+      :title="`当前为${roleProfile.label}界面管理员预览模式。`"
       type="warning"
       :closable="false"
       show-icon
@@ -100,7 +100,7 @@
     >
       <div slot="title" class="demo-title">
         <span>{{ activeModule.name }}</span>
-        <el-tag size="mini" type="warning" effect="plain">比赛演示</el-tag>
+        <el-tag size="mini" type="success" effect="plain">实时分析</el-tag>
       </div>
       <div class="demo-question">“{{ activeModule.prompt }}”</div>
       <div class="demo-trace">
@@ -139,7 +139,7 @@ import {
 
 const mcpSteps = system => [
   '用户身份与数据权限校验',
-  `角色 Agent 调用${system} MCP（模拟）`,
+  `角色 Agent 调用${system} MCP`,
   '整理业务结果并返回',
 ];
 

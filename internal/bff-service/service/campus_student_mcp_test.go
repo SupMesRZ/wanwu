@@ -13,12 +13,13 @@ import (
 func TestCampusStudentMCPToolSchemas(t *testing.T) {
 	tools := campusStudentMCPTools()
 	wantNames := map[string]bool{
-		"query_my_schedule":         false,
-		"query_my_exam_schedule":    false,
-		"query_my_score":            false,
-		"query_my_leave_records":    false,
-		"query_my_learning_summary": false,
-		"create_leave_application":  false,
+		"query_my_schedule":          false,
+		"query_my_exam_schedule":     false,
+		"query_my_score":             false,
+		"query_my_leave_records":     false,
+		"query_my_learning_summary":  false,
+		"create_leave_application":   false,
+		"complete_leave_application": false,
 	}
 	for _, tool := range tools {
 		wantNames[tool.definition.Name] = true

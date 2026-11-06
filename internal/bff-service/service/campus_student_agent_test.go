@@ -47,6 +47,10 @@ func TestCampusStudentAssistantRequiredTools(t *testing.T) {
 	if err := validateCampusStudentAssistant(valid); err != nil {
 		t.Fatalf("approved leave workflow should be allowed: %v", err)
 	}
+	valid.WorkFlowInfos = append(valid.WorkFlowInfos, &assistant_service.AssistantWorkFlowInfos{WorkFlowId: "completion"})
+	if err := validateCampusStudentAssistant(valid); err != nil {
+		t.Fatalf("approved leave workflows should be allowed: %v", err)
+	}
 }
 
 func TestCampusStudentAssistantFixedIdentityAndNarrowRequest(t *testing.T) {

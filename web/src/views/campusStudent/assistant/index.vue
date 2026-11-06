@@ -1,7 +1,11 @@
 <template>
   <div
     class="student-assistant"
-    :class="{ 'student-assistant--conversation': hasConversation }"
+    :class="{
+      'student-assistant--conversation': hasConversation,
+      'student-assistant--motion-paused': motionPaused,
+    }"
+    :style="ambientMotionStyle"
   >
     <header class="student-assistant__header">
       <slot name="header-title"></slot>
@@ -17,6 +21,146 @@
         <span>新对话</span>
       </button>
     </header>
+
+    <div
+      v-if="!configError"
+      :class="['digital-human', `digital-human--${expression}`]"
+      :style="digitalHumanMotionStyle"
+    >
+      <span class="digital-human__aura" aria-hidden="true"></span>
+      <span class="digital-human__shadow" aria-hidden="true"></span>
+      <button
+        type="button"
+        class="digital-human__character"
+        :aria-label="`和${roleProfile.assistantName}打个招呼`"
+        title="点我打个招呼"
+        @click="setExpression('happy', 1500)"
+      >
+        <img
+          v-if="digitalHumanFailed"
+          class="digital-human__fallback"
+          :src="displayAvatar"
+          alt=""
+          @error="handleAvatarError"
+        />
+        <template v-else>
+          <img
+            class="digital-human__body"
+            src="@/assets/imgs/hexiaozhi-digital-human.png"
+            alt=""
+            @error="digitalHumanFailed = true"
+          />
+          <img
+            class="digital-human__antenna"
+            src="@/assets/imgs/hexiaozhi-digital-human.png"
+            alt=""
+          />
+          <img
+            class="digital-human__arm digital-human__arm--left"
+            src="@/assets/imgs/hexiaozhi-digital-human.png"
+            alt=""
+          />
+          <img
+            class="digital-human__arm digital-human__arm--right"
+            src="@/assets/imgs/hexiaozhi-digital-human.png"
+            alt=""
+          />
+          <span class="digital-human__screen" aria-hidden="true">
+            <svg class="digital-human__eyes" viewBox="0 0 120 64">
+              <defs>
+                <filter
+                  :id="`hexiaozhi-eye-glow-${_uid}`"
+                  x="-60%"
+                  y="-60%"
+                  width="220%"
+                  height="220%"
+                  color-interpolation-filters="sRGB"
+                >
+                  <feGaussianBlur stdDeviation="2" />
+                  <feMerge>
+                    <feMergeNode />
+                    <feMergeNode in="SourceGraphic" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <g
+                class="digital-human__gaze"
+                :filter="`url(#hexiaozhi-eye-glow-${_uid})`"
+              >
+                <g
+                  v-for="side in ['left', 'right']"
+                  :key="side"
+                  :transform="`translate(${side === 'left' ? 32 : 88}, 30)`"
+                >
+                  <g class="digital-human__eye">
+                    <path
+                      v-if="['happy', 'answering'].includes(expression)"
+                      class="digital-human__eye-shape"
+                      d="M -13 3 Q 0 -16 13 3"
+                    />
+                    <text
+                      v-else-if="expression === 'doubt' && side === 'right'"
+                      class="digital-human__eye-question"
+                      x="0"
+                      y="11"
+                    >
+                      ?
+                    </text>
+                    <path
+                      v-else-if="expression === 'thinking'"
+                      class="digital-human__eye-shape"
+                      d="M -12 -4 H 12 M -10 -3 Q 0 13 10 -3"
+                    />
+                    <path
+                      v-else-if="expression === 'success'"
+                      class="digital-human__eye-shape"
+                      d="M -12 6 L 0 -9 L 12 6"
+                    />
+                    <g v-else-if="expression === 'unrecognized'">
+                      <circle class="digital-human__eye-shape" r="13" />
+                      <circle class="digital-human__eye-shape" r="6" />
+                      <circle class="digital-human__eye-core" r="1.5" />
+                    </g>
+                    <g v-else>
+                      <rect
+                        class="digital-human__eye-shape"
+                        x="-14"
+                        y="-14"
+                        width="28"
+                        height="28"
+                        rx="7"
+                      />
+                      <rect
+                        class="digital-human__eye-core"
+                        :x="side === 'left' ? 9 : -13"
+                        y="-5"
+                        width="4"
+                        height="10"
+                        rx="1.5"
+                      />
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </svg>
+            <span class="digital-human__mouth"></span>
+          </span>
+        </template>
+      </button>
+      <span
+        class="digital-human__sparkle digital-human__sparkle--left"
+        aria-hidden="true"
+      >
+        ✦
+      </span>
+      <span
+        class="digital-human__sparkle digital-human__sparkle--right"
+        aria-hidden="true"
+      >
+        ✧
+      </span>
+    </div>
 
     <section v-if="configError" class="student-assistant__empty">
       <img
@@ -49,17 +193,14 @@
       :campus-student-adapter="campusStudentAdapter"
       :visible-clear-history="false"
       :visible-upload="false"
+      :visible-voice="true"
       :max-pic-num="0"
       :max-file-num="0"
       @conversation-state="hasConversation = $event"
+      @voice-state="handleVoiceState"
     >
       <template #welcome>
         <section class="student-welcome-intro" aria-labelledby="welcome-title">
-          <img
-            :src="welcomeAvatar"
-            alt="河北大学校徽"
-            @error="handleWelcomeAvatarError"
-          />
           <h1 id="welcome-title">你好，我是河小智</h1>
           <p>{{ roleProfile.welcome }}</p>
         </section>
@@ -119,6 +260,7 @@ import {
   createCampusRoleAssistantConversation,
   getCampusRoleAssistant,
 } from '@/api/campusBusiness';
+import motionTimeline from './motion/build/timeline.json';
 
 const STRUCTURED_ACTIONS = [
   {
@@ -159,6 +301,10 @@ export default {
       configError: '',
       hasConversation: false,
       schoolLogoFailed: false,
+      digitalHumanFailed: false,
+      motionPaused: false,
+      expression: 'idle',
+      expressionTimer: null,
       editForm: {
         name: CAMPUS_ROLES[this.role]?.assistantName || '河小智助手',
         avatar: { path: campusStudentAssistantAvatar() },
@@ -171,8 +317,20 @@ export default {
   async created() {
     await this.loadAssistant();
   },
+  mounted() {
+    this.handleMotionVisibility();
+    document.addEventListener('visibilitychange', this.handleMotionVisibility);
+  },
+  beforeDestroy() {
+    clearTimeout(this.expressionTimer);
+    document.removeEventListener(
+      'visibilitychange',
+      this.handleMotionVisibility,
+    );
+  },
   computed: {
     ...mapGetters('user', ['token', 'userInfo', 'commonInfo']),
+    ...mapGetters('app', ['sessionStatus']),
     roleProfile() {
       return CAMPUS_ROLES[this.role] || CAMPUS_ROLES.student;
     },
@@ -210,8 +368,55 @@ export default {
         stream: this.stream,
       };
     },
+    digitalHumanMotionStyle() {
+      const duration = this.motionDuration;
+      return {
+        '--breath-duration': `${duration / 2}s`,
+        '--expression-duration': `${duration}s`,
+        '--float-duration': `${duration}s`,
+      };
+    },
+    motionDuration() {
+      return motionTimeline.segments[motionTimeline.segments.length - 1]
+        .endExclusive;
+    },
+    ambientMotionStyle() {
+      return { '--ambient-duration': `${this.motionDuration}s` };
+    },
+  },
+  watch: {
+    sessionStatus(value, previous) {
+      if (value === 0) {
+        this.setExpression('thinking');
+        this.expressionTimer = setTimeout(() => {
+          if (this.sessionStatus === 0) this.setExpression('answering');
+        }, 650);
+      } else if (previous === 0) {
+        this.setExpression('happy', 1500);
+      }
+    },
   },
   methods: {
+    handleMotionVisibility() {
+      this.motionPaused = document.hidden;
+    },
+    setExpression(expression, duration = 0) {
+      clearTimeout(this.expressionTimer);
+      this.expression = expression;
+      if (duration) {
+        this.expressionTimer = setTimeout(() => {
+          this.expression = 'idle';
+        }, duration);
+      }
+    },
+    handleVoiceState(expression) {
+      const duration = {
+        success: 1200,
+        doubt: 1500,
+        unrecognized: 1800,
+      }[expression];
+      this.setExpression(expression, duration);
+    },
     async loadAssistant() {
       try {
         const res = this.isStudent
@@ -305,12 +510,94 @@ export default {
   --student-text: #30343b;
   --student-muted: #8a9099;
 
+  position: relative;
   display: flex;
   height: 100%;
   min-height: 0;
   flex-direction: column;
   color: var(--student-text);
-  background: #fff;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(135deg, #fafdff 0%, #f1f8ff 48%, #fbf8ff 100%);
+
+  &::before,
+  &::after {
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    content: '';
+  }
+
+  &::before {
+    inset: -22%;
+    background:
+      radial-gradient(
+        circle at 15% 28%,
+        rgba(74, 157, 255, 0.4) 0 10%,
+        transparent 32%
+      ),
+      radial-gradient(
+        circle at 78% 18%,
+        rgba(177, 145, 255, 0.32) 0 9%,
+        transparent 30%
+      ),
+      radial-gradient(
+        circle at 72% 82%,
+        rgba(75, 210, 224, 0.26) 0 8%,
+        transparent 28%
+      ),
+      radial-gradient(
+        circle at 28% 86%,
+        rgba(126, 185, 255, 0.3) 0 7%,
+        transparent 26%
+      );
+    opacity: 1;
+    animation: campus-background-breathe var(--ambient-duration) ease-in-out
+      infinite;
+  }
+
+  &::after {
+    inset: -30% -18%;
+    background:
+      linear-gradient(
+        116deg,
+        transparent 35%,
+        rgba(255, 255, 255, 0.78) 44%,
+        rgba(150, 210, 255, 0.32) 48%,
+        transparent 57%
+      ),
+      radial-gradient(
+        circle at 84% 72%,
+        rgba(255, 255, 255, 0.55) 0 1.2%,
+        transparent 1.8%
+      ),
+      radial-gradient(
+        circle at 9% 66%,
+        rgba(255, 255, 255, 0.45) 0 0.9%,
+        transparent 1.6%
+      );
+    opacity: 0.78;
+    transform: rotate(-5deg) translate3d(-3%, 0, 0);
+    animation: campus-light-drift calc(var(--ambient-duration) * 1.5)
+      ease-in-out infinite;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.student-assistant__header {
+  backdrop-filter: blur(12px);
+}
+
+.student-assistant--conversation::before {
+  opacity: 0.58;
+}
+
+.student-assistant--conversation::after {
+  opacity: 0.36;
 }
 
 .student-assistant__header {
@@ -376,15 +663,8 @@ export default {
 .student-welcome-intro {
   width: min(860px, 100%);
   margin: 0 auto;
+  padding-top: 135px;
   text-align: center;
-
-  img {
-    display: block;
-    width: 64px;
-    height: 64px;
-    margin: 0 auto;
-    object-fit: contain;
-  }
 
   h1 {
     margin: 14px 0 0;
@@ -400,6 +680,512 @@ export default {
     color: var(--student-muted);
     font-size: 15px;
     line-height: 1.7;
+  }
+}
+
+.digital-human {
+  position: absolute;
+  z-index: 8;
+  top: 104px;
+  left: 50%;
+  width: 192px;
+  height: 192px;
+  font-size: 192px;
+  transform: translateX(-50%);
+  transition:
+    width 0.2s ease,
+    height 0.2s ease,
+    top 0.2s ease;
+}
+
+.digital-human__character {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  font-size: inherit;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transform-origin: 50% 62%;
+  animation: digital-float var(--float-duration) ease-in-out infinite;
+
+  &:focus-visible {
+    outline: 2px solid #76a9ff;
+    outline-offset: 8px;
+  }
+
+  > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+  }
+}
+
+// ponytail: rigid PNG parts; use pose footage if articulated joints are needed.
+.digital-human__body {
+  clip-path: inset(22% 0 0 0);
+  mask-image:
+    linear-gradient(#000 0 0),
+    radial-gradient(ellipse 8% 6% at 25% 65%, #000 99%, transparent 100%),
+    radial-gradient(ellipse 8% 6% at 75% 65%, #000 99%, transparent 100%);
+  mask-composite: exclude;
+}
+
+.digital-human__antenna {
+  clip-path: inset(0 0 78% 0);
+  transform-origin: 50% 22%;
+  animation: digital-antenna var(--float-duration) ease-in-out infinite;
+}
+
+.digital-human__arm {
+  animation: digital-wave var(--float-duration) ease-in-out infinite;
+  mask-image: linear-gradient(#000 69%, transparent 69%);
+
+  &--left {
+    clip-path: ellipse(8% 6% at 25% 65%);
+    transform-origin: 33% 65%;
+  }
+
+  &--right {
+    clip-path: ellipse(8% 6% at 75% 65%);
+    transform-origin: 67% 65%;
+    animation-name: digital-resting-arm;
+  }
+}
+
+.digital-human__aura,
+.digital-human__shadow,
+.digital-human__sparkle {
+  position: absolute;
+  pointer-events: none;
+}
+
+.digital-human__aura {
+  inset: -20%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(191, 236, 255, 0.6),
+    rgba(221, 230, 255, 0.28) 45%,
+    transparent 70%
+  );
+  animation: campus-background-breathe var(--float-duration) ease-in-out
+    infinite;
+}
+
+.digital-human__shadow {
+  bottom: -1%;
+  left: 14%;
+  width: 72%;
+  height: 12%;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    rgba(74, 190, 255, 0.45),
+    rgba(166, 224, 255, 0.15) 45%,
+    transparent 72%
+  );
+  box-shadow:
+    0 0 0 7px rgba(255, 255, 255, 0.3),
+    0 0 18px rgba(109, 202, 255, 0.18);
+  animation: digital-shadow var(--float-duration) ease-in-out infinite;
+}
+
+.digital-human__sparkle {
+  color: #fff;
+  font-size: 23px;
+  text-shadow: 0 0 12px #8dceff;
+  animation: digital-sparkle var(--float-duration) ease-in-out infinite;
+
+  &--left {
+    top: 35%;
+    left: -8%;
+  }
+  &--right {
+    top: 18%;
+    right: -5%;
+    animation-delay: calc(var(--float-duration) / -2);
+  }
+}
+
+.student-assistant--conversation > .digital-human {
+  top: 72px;
+  right: 22px;
+  left: auto;
+  width: 104px;
+  height: 104px;
+  font-size: 104px;
+  transform: none;
+
+  .digital-human__sparkle {
+    display: none;
+  }
+}
+
+.digital-human__screen {
+  position: absolute;
+  top: 32%;
+  left: 28.5%;
+  width: 43%;
+  height: 24.5%;
+  overflow: hidden;
+  border-radius: 42% 42% 46% 46%;
+  background: radial-gradient(circle at 50% 120%, #183e6c, #06152d 58%);
+  box-shadow: inset 0 0 0.05682em rgba(51, 154, 255, 0.2);
+
+  &::after {
+    position: absolute;
+    top: 8%;
+    left: 12%;
+    width: 48%;
+    height: 16%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    content: '';
+    transform: rotate(-7deg);
+  }
+}
+
+.digital-human__eyes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.digital-human__eye {
+  transform-origin: 0 0;
+}
+
+.digital-human__eye-shape {
+  fill: none;
+  stroke: #9afaff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.digital-human__eye-core,
+.digital-human__eye-question {
+  fill: #e7ffff;
+}
+
+.digital-human__eye-question {
+  font-family: Arial, sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.digital-human__mouth {
+  position: absolute;
+  bottom: 18%;
+  left: 42%;
+  width: 16%;
+  height: 10%;
+  border-bottom: 0.01136em solid #8feaff;
+  border-radius: 0 0 50% 50%;
+  box-shadow: 0 0.01136em 0.02273em rgba(56, 191, 255, 0.55);
+  transition: all 0.15s ease-out;
+}
+
+.digital-human--idle .digital-human__gaze {
+  animation: digital-eye-gaze 16s infinite;
+}
+
+.digital-human--idle .digital-human__eye,
+.digital-human--listening .digital-human__eye {
+  animation: digital-eye-blink 4.2s ease-in-out infinite;
+}
+
+.digital-human--idle .digital-human__mouth {
+  animation: digital-idle-mouth var(--expression-duration) ease-in-out infinite;
+}
+
+.digital-human--happy .digital-human__mouth,
+.digital-human--success .digital-human__mouth {
+  bottom: 15%;
+  left: 38%;
+  width: 24%;
+  height: 15%;
+  border-width: 0 0 0.01705em;
+}
+
+.digital-human--answering .digital-human__mouth {
+  animation: digital-talk 0.45s ease-in-out infinite alternate;
+}
+
+.digital-human--thinking {
+  .digital-human__mouth {
+    height: 0;
+    border-radius: 0;
+  }
+}
+
+.digital-human--listening .digital-human__eye-core {
+  animation: digital-listen 0.9s ease-in-out infinite alternate;
+}
+
+.digital-human--doubt .digital-human__mouth {
+  left: 44%;
+  width: 13%;
+  transform: rotate(-12deg);
+}
+
+.digital-human--unrecognized .digital-human__mouth {
+  bottom: 14%;
+  left: 44%;
+  width: 12%;
+  height: 15%;
+  border: 0.01136em solid #8feaff;
+  border-radius: 50%;
+}
+
+@keyframes digital-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg) scale(0.98);
+  }
+  20% {
+    transform: translateY(-5%) rotate(-1deg) scale(0.99);
+  }
+  40% {
+    transform: translateY(-11%) rotate(1deg) scale(0.995);
+  }
+  50% {
+    transform: translateY(-14%) rotate(2deg) scale(1);
+  }
+  75% {
+    transform: translateY(-6%) rotate(0) scale(0.99);
+  }
+}
+
+@keyframes digital-wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(18deg);
+  }
+  40% {
+    transform: rotate(48deg);
+  }
+  46%,
+  58% {
+    transform: rotate(65deg);
+  }
+  52% {
+    transform: rotate(48deg);
+  }
+  75% {
+    transform: rotate(16deg);
+  }
+}
+
+@keyframes digital-resting-arm {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  45%,
+  55% {
+    transform: rotate(-12deg);
+  }
+}
+
+@keyframes digital-antenna {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes digital-shadow {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes digital-sparkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes campus-background-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes campus-light-drift {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: rotate(-5deg) translate3d(-6%, 1%, 0);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: rotate(-2deg) translate3d(6%, -2%, 0);
+  }
+}
+
+@keyframes digital-eye-blink {
+  0%,
+  90%,
+  97.142857%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  93.571429% {
+    transform: scaleY(0.06);
+  }
+}
+
+@keyframes digital-eye-gaze {
+  0%,
+  9%,
+  21%,
+  34%,
+  46%,
+  59%,
+  71%,
+  84%,
+  96%,
+  100% {
+    transform: translate(0, 0);
+  }
+  10%,
+  20% {
+    transform: translate(-3px, 0);
+  }
+  35%,
+  45% {
+    transform: translate(3px, 0);
+  }
+  60%,
+  70% {
+    transform: translate(0, -3px);
+  }
+  85%,
+  95% {
+    transform: translate(0, 3px);
+  }
+}
+
+@keyframes digital-idle-mouth {
+  0%,
+  34%,
+  51%,
+  84%,
+  100% {
+    bottom: 18%;
+    left: 42%;
+    width: 16%;
+    height: 10%;
+    border: 0;
+    border-bottom: 0.01136em solid #8feaff;
+    border-radius: 0 0 50% 50%;
+  }
+
+  36%,
+  49% {
+    bottom: 15%;
+    left: 38%;
+    width: 24%;
+    height: 15%;
+    border: 0;
+    border-bottom: 0.01705em solid #8feaff;
+    border-radius: 0 0 50% 50%;
+  }
+
+  86%,
+  99% {
+    bottom: 15%;
+    left: 45%;
+    width: 10%;
+    height: 13%;
+    border: 0.01136em solid #8feaff;
+    border-radius: 50%;
+  }
+}
+
+@keyframes digital-listen {
+  to {
+    opacity: 0.5;
+  }
+}
+
+@keyframes digital-talk {
+  to {
+    bottom: 14%;
+    left: 45%;
+    width: 10%;
+    height: 16%;
+    border: 0.01136em solid #8feaff;
+    border-radius: 50%;
+  }
+}
+
+.student-assistant--motion-paused {
+  &::before,
+  &::after,
+  .digital-human * {
+    animation-play-state: paused;
+  }
+}
+
+@supports not (mask-composite: exclude) {
+  .digital-human__body {
+    clip-path: none;
+    mask-image: none;
+  }
+  .digital-human__arm,
+  .digital-human__antenna {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .digital-human *,
+  .student-assistant::before,
+  .student-assistant::after {
+    animation: none;
   }
 }
 
@@ -474,22 +1260,33 @@ export default {
   flex: 1;
   min-height: 0;
   width: 100%;
+  background: transparent;
 
   > .el-main {
     padding: 0 !important;
     border-radius: 0;
-    background: #fff;
+    background: transparent;
   }
 
   .smart-center {
     box-sizing: border-box;
+    background: transparent;
+  }
+
+  .echo,
+  .welcome-after-composer,
+  .center-session,
+  .component {
+    background: transparent;
   }
 
   .editable-box {
     box-sizing: border-box;
     overflow: hidden;
     border-color: #e3e7ed;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.68);
+    box-shadow: 0 12px 34px rgba(58, 111, 170, 0.1);
+    backdrop-filter: blur(18px);
   }
 
   .editable-wp-right {
@@ -606,15 +1403,17 @@ export default {
 }
 
 ::v-deep .agent-chat.is-conversation {
-  background: #fff;
+  background: transparent;
 
   .smart-center {
     padding: 0 24px !important;
+    background: transparent;
   }
 
   .center-session {
     min-height: 0;
     overflow: hidden;
+    background: transparent;
   }
 
   .component {
@@ -636,7 +1435,11 @@ export default {
     width: min(860px, calc(100% - 40px));
     margin: 0 auto 22px;
     padding-top: 8px;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 28%);
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.82) 28%
+    );
   }
 
   .editable-box {
@@ -786,6 +1589,21 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .digital-human {
+    top: 94px;
+    width: 140px;
+    height: 140px;
+    font-size: 140px;
+  }
+
+  .student-assistant--conversation > .digital-human {
+    top: 66px;
+    right: 10px;
+    width: 72px;
+    height: 72px;
+    font-size: 72px;
+  }
+
   .student-assistant__header {
     flex-basis: 58px;
     min-height: 58px;

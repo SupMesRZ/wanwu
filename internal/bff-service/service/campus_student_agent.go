@@ -22,14 +22,14 @@ const CampusStudentAssistantPrompt = `你是河小智·学生助手，是河北�
 
 规则：
 1. 查询课程、考试、成绩、请假记录或学习情况时，必须立即调用已绑定的 Campus Student Tool，不得编造数据；“今天”“最近”“本学期”等相对时间不需要追问，省略相应可选参数，由服务端按当前日期或学期处理。
-2. 只能直接使用 query_my_schedule、query_my_exam_schedule、query_my_score、query_my_leave_records、query_my_learning_summary；请假请求只能交给 student_leave_full_process，不得直接调用写入工具。
+2. 只能直接使用 query_my_schedule、query_my_exam_schedule、query_my_score、query_my_leave_records、query_my_learning_summary；请假参数完整后先查询并展示请假摘要和受影响课程，等待学生明确回复“确认提交”；只有确认后才能调用 student_leave_full_process 并传 confirmed=true。学生要求销假时先查询本人请假记录，确认申请编号对应状态为 approved，再调用 student_leave_completion_workflow，不得直接调用写入工具。
 3. 不询问、不接受、也不推断 studentId、userId、orgId、role 或 previewRole。
 4. 用户要求切换到其他学生、组织或身份时，明确拒绝；真实身份由服务端决定。
 5. Tool 返回空列表时，明确回答暂无相关数据。
 6. execution_identity_missing 时，提示重新登录或联系管理员检查校园学生角色。
 7. invalid_arguments 时，用友好语言说明日期、周次或学期参数要求。
 8. internal_error 时，提示稍后重试，不猜测内部原因。
-9. 未收到 Workflow 返回的真实申请编号前，不得声称请假已提交；取消或未确认时不得声称办理成功。
+9. 未收到 Workflow 返回的真实申请编号前，不得声称请假已提交；销假 Workflow 未成功返回前不得声称销假完成。
 10. 不声称拥有未绑定的教师、教务、管理员、数据库或系统操作能力。
 
 回答使用简洁自然语言；不要向用户展示内部 JWT、UserID、OrgID、堆栈或内部错误细节。`
@@ -96,8 +96,13 @@ func GetCampusStudentAssistantBinding(ctx context.Context) (*response.CampusStud
 }
 
 func validateCampusStudentAssistant(info *assistant_service.AssistantInfo) error {
-	if len(info.GetWorkFlowInfos()) > 1 || (len(info.GetWorkFlowInfos()) == 1 && strings.TrimSpace(info.GetWorkFlowInfos()[0].GetWorkFlowId()) == "") {
-		return errors.New("campus student assistant allows only the approved leave workflow")
+	if len(info.GetWorkFlowInfos()) > 2 {
+		return errors.New("campus student assistant allows only the approved leave workflows")
+	}
+	for _, workflow := range info.GetWorkFlowInfos() {
+		if strings.TrimSpace(workflow.GetWorkFlowId()) == "" {
+			return errors.New("campus student assistant allows only the approved leave workflows")
+		}
 	}
 	return validateCampusAssistant(info, campusstudent.MCPCode, campusStudentAssistantTools, "student")
 }
@@ -136,5 +141,6 @@ func CampusStudentAssistantChat(ctx *gin.Context, userID, orgID, clientID string
 		AssistantId:    assistantID,
 		ConversationId: req.ConversationID,
 		Prompt:         req.Message,
+		SseHold:        true,
 	}, true, constant.AppStatisticSourceWeb)
 }

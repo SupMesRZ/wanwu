@@ -33,7 +33,7 @@ func (p *PromptVariables) AssemblePromptVariables(ctx context.Context, reqContex
 	variables = make(map[string]any)
 
 	variables[prompt.PlaceholderOfAgentSystemPrompt] = req.AgentBaseParams.Instruction
-	variables[prompt.PlaceholderOfTime] = time.Now().Format("Monday 2006/01/02 15:04:05 -07")
+	variables[prompt.PlaceholderOfTime] = time.Now().In(util.UTC8).Format("Monday 2006/01/02 15:04:05 -07:00 (Asia/Shanghai)")
 	variables[prompt.PlaceholderOfAgentName] = req.AgentBaseParams.Name
 
 	input, err := buildUserInput(reqContext)

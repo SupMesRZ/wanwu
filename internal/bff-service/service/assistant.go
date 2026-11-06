@@ -194,9 +194,10 @@ func AssistantCopy(ctx *gin.Context, userId, orgId string, req request.Assistant
 
 func AssistantWorkFlowCreate(ctx *gin.Context, userId, orgId string, req request.AssistantWorkFlowAddRequest) error {
 	if req.AssistantId == strings.TrimSpace(config.Cfg().CampusStudent.AssistantID) {
-		approvedID, err := campusManagedWorkflowID(ctx, orgId, campusWorkflowLeaveCode)
-		if err != nil || req.WorkFlowId != approvedID {
-			return fmt.Errorf("campus student assistant only allows student_leave_full_process")
+		approvedLeaveID, err := campusManagedWorkflowID(ctx, orgId, campusWorkflowLeaveCode)
+		approvedCompletionID, completionErr := campusManagedWorkflowID(ctx, orgId, campusWorkflowCompleteLeaveCode)
+		if (err != nil && completionErr != nil) || (req.WorkFlowId != approvedLeaveID && req.WorkFlowId != approvedCompletionID) {
+			return fmt.Errorf("campus student assistant only allows approved leave workflows")
 		}
 	}
 	_, err := assistant.AssistantWorkFlowCreate(ctx.Request.Context(), &assistant_service.AssistantWorkFlowCreateReq{

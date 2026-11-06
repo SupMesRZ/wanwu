@@ -152,7 +152,7 @@ func CampusRoleAssistantChat(ctx *gin.Context, userID, orgID, clientID string, r
 	if err != nil {
 		return err
 	}
-	return AssistantConversionStream(ctx, userID, orgID, clientID, request.ConversionStreamRequest{AssistantId: assistantID, ConversationId: req.ConversationID, Prompt: req.Message}, true, constant.AppStatisticSourceWeb)
+	return AssistantConversionStream(ctx, userID, orgID, clientID, request.ConversionStreamRequest{AssistantId: assistantID, ConversationId: req.ConversationID, Prompt: req.Message, SseHold: true}, true, constant.AppStatisticSourceWeb)
 }
 
 func GetCampusTeacherAssistantBinding(ctx context.Context) (*response.CampusStudentAssistantBinding, error) {

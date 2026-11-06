@@ -49,6 +49,7 @@ var campusTeacherReviewOrgID string
 var errCampusLeaveTimeConflict = errors.New("LEAVE_TIME_CONFLICT")
 var errCampusLeaveNotFound = errors.New("leave_request_not_found")
 var errCampusLeaveNotPending = errors.New("leave_request_not_pending")
+var errCampusLeaveNotApproved = errors.New("leave_request_not_approved")
 
 func initCampusLeaveStore(db *gorm.DB) error {
 	if err := db.AutoMigrate(&CampusLeaveApplication{}); err != nil {
@@ -249,10 +250,57 @@ func ReviewCampusLeave(identity CampusBusinessExecutionIdentity, requestID, deci
 	return CampusLeaveApplication{}, errCampusLeaveNotFound
 }
 
+func CompleteCampusLeave(identity CampusBusinessExecutionIdentity, requestID string) (CampusLeaveApplication, error) {
+	if identity.ActualRole != CampusRoleStudent || identity.UserID == "" || identity.OrgID == "" {
+		return CampusLeaveApplication{}, errors.New("execution_identity_missing")
+	}
+	if strings.TrimSpace(requestID) == "" {
+		return CampusLeaveApplication{}, errors.New("invalid_arguments")
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	if campusLeaveDB != nil {
+		var app CampusLeaveApplication
+		err := campusLeaveDB.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Where("request_id = ? AND owner_user_id = ? AND owner_org_id = ?", requestID, identity.UserID, identity.OrgID).First(&app).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return errCampusLeaveNotFound
+				}
+				return err
+			}
+			if app.Status != "approved" {
+				return errCampusLeaveNotApproved
+			}
+			return tx.Model(&CampusLeaveApplication{}).Where("id = ? AND status = ?", app.ID, "approved").Updates(map[string]any{"status": "completed", "updated_at": now}).Error
+		})
+		if err != nil && !errors.Is(err, errCampusLeaveNotFound) && !errors.Is(err, errCampusLeaveNotApproved) {
+			log.Errorf("campus leave completion failed: %v", err)
+			return CampusLeaveApplication{}, errors.New("internal_error")
+		}
+		if err == nil {
+			_ = campusLeaveDB.Where("request_id = ?", requestID).First(&app).Error
+		}
+		return app, err
+	}
+	campusLeaves.mu.Lock()
+	defer campusLeaves.mu.Unlock()
+	for key, app := range campusLeaves.byKey {
+		if app.RequestID != requestID || app.OwnerUserID != identity.UserID || app.OwnerOrgID != identity.OrgID {
+			continue
+		}
+		if app.Status != "approved" {
+			return CampusLeaveApplication{}, errCampusLeaveNotApproved
+		}
+		app.Status, app.UpdatedAt = "completed", now
+		campusLeaves.byKey[key] = app
+		return app, nil
+	}
+	return CampusLeaveApplication{}, errCampusLeaveNotFound
+}
+
 func campusLeaveRecords(apps []CampusLeaveApplication) []response.CampusStudentLeaveRecord {
 	result := make([]response.CampusStudentLeaveRecord, 0, len(apps))
 	for _, app := range apps {
-		result = append(result, response.CampusStudentLeaveRecord{ApplicationNo: app.RequestID, StartTime: app.StartTime, EndTime: app.EndTime, LeaveType: app.LeaveType, Reason: app.Reason, Status: app.Status, StatusText: map[string]string{"pending": "审批中", "approved": "已通过", "rejected": "已驳回"}[app.Status], CreatedAt: app.CreatedAt})
+		result = append(result, response.CampusStudentLeaveRecord{ApplicationNo: app.RequestID, StartTime: app.StartTime, EndTime: app.EndTime, LeaveType: app.LeaveType, Reason: app.Reason, Status: app.Status, StatusText: map[string]string{"pending": "审批中", "approved": "已通过", "rejected": "已驳回", "completed": "已销假"}[app.Status], CreatedAt: app.CreatedAt})
 	}
 	return result
 }

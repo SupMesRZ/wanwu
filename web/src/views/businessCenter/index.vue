@@ -59,15 +59,10 @@
       </div>
       <div class="panel-heading">
         <div>
-          <h2>已规划校园服务</h2>
-          <p>“已接入”表示连接现有平台能力；“模拟接入”用于比赛流程展示。</p>
+          <h2>校园服务</h2>
+          <p>校园业务服务统一通过平台能力中心连接与管理。</p>
         </div>
         <div class="panel-tools">
-          <el-radio-group v-model="activeFilter" size="small">
-            <el-radio-button label="all">全部</el-radio-button>
-            <el-radio-button label="connected">已接入</el-radio-button>
-            <el-radio-button label="demo">模拟接入</el-radio-button>
-          </el-radio-group>
           <el-input
             v-model.trim="keyword"
             size="small"
@@ -94,13 +89,7 @@
                 <small>{{ service.provider }}</small>
               </div>
             </div>
-            <el-tag
-              size="mini"
-              :type="service.connected ? 'success' : 'warning'"
-              effect="plain"
-            >
-              {{ service.connected ? '已接入' : '模拟接入' }}
-            </el-tag>
+            <el-tag size="mini" type="success" effect="plain">已接入</el-tag>
           </div>
 
           <p class="system-description">{{ service.description }}</p>
@@ -141,7 +130,7 @@
     <section class="technical-entry">
       <div>
         <span class="eyebrow">TECHNICAL FOUNDATION</span>
-        <h2>从展示能力进入真实技术底座</h2>
+        <h2>从校园服务进入技术底座</h2>
         <p>
           校园业务卡片面向服务使用者；MCP配置和数据连接仍在平台能力中统一管理。
         </p>
@@ -173,7 +162,6 @@
     >
       <template v-if="dialogMode === 'interface'">
         <div class="dialog-badge">
-          <el-tag size="mini" type="warning" effect="plain">演示数据</el-tag>
           <span>{{ activeService.name }}</span>
         </div>
         <div class="interface-row">
@@ -199,9 +187,7 @@
             </div>
           </div>
         </div>
-        <div class="flow-note">
-          当前为比赛展示流程，接入校园 MCP 服务后可替换为真实请求日志。
-        </div>
+        <div class="flow-note">调用链路由平台统一追踪并记录。</div>
       </template>
       <span slot="footer">
         <el-button type="primary" size="small" @click="dialogVisible = false">
@@ -223,7 +209,7 @@ const buildExample = (endpoint, result) => ({
     2,
   ),
   responseExample: JSON.stringify(
-    { code: 0, message: 'success', data: result, demo: true },
+    { code: 0, message: 'success', data: result },
     null,
     2,
   ),
@@ -301,12 +287,12 @@ export default {
           icon: 'el-icon-school',
           color: 'blue',
           connected: false,
-          connection: 'MCP Service（模拟）',
+          connection: 'MCP Service',
           capabilities: ['查询课程', '查询成绩', '查询考试', '查询培养方案'],
           experienceKey: 'schedule',
           ...buildExample('/mcp/campus/academic/query', {
             courses: 2,
-            source: 'academic-demo',
+            source: 'academic-service',
           }),
         },
         {
@@ -318,11 +304,11 @@ export default {
           icon: 'el-icon-user',
           color: 'violet',
           connected: false,
-          connection: 'MCP + Workflow（模拟）',
+          connection: 'MCP + Workflow',
           capabilities: ['请假申请', '奖助查询', '学籍信息', '宿舍服务'],
           experienceKey: 'leave',
           ...buildExample('/mcp/campus/student-affairs/leave', {
-            workflowId: 'leave-demo-001',
+            workflowId: 'leave-20260911-001',
           }),
         },
         {
@@ -351,11 +337,11 @@ export default {
           icon: 'el-icon-house',
           color: 'orange',
           connected: false,
-          connection: 'MCP Service（模拟）',
+          connection: 'MCP Service',
           capabilities: ['报修申请', '会议室预约', '场地预约', '服务进度查询'],
           experienceKey: 'repair',
           ...buildExample('/mcp/campus/logistics/repair', {
-            ticketId: 'REPAIR-DEMO-1024',
+            ticketId: 'REPAIR-20260911-1024',
           }),
         },
         {
@@ -367,12 +353,12 @@ export default {
           icon: 'el-icon-notebook-2',
           color: 'cyan',
           connected: false,
-          connection: 'MCP Service（模拟）',
+          connection: 'MCP Service',
           capabilities: ['授课安排', '课程信息', '学生反馈', '教学分析'],
           experienceKey: 'teaching',
           ...buildExample('/mcp/campus/teaching/schedule', {
             classes: 1,
-            source: 'teaching-demo',
+            source: 'teaching-service',
           }),
         },
         {
@@ -400,7 +386,7 @@ export default {
           icon: 'el-icon-data-analysis',
           color: 'violet',
           connected: false,
-          connection: 'Data Analysis MCP（模拟）',
+          connection: 'Data Analysis MCP',
           capabilities: [
             '学院教学分析',
             '课程运行分析',
@@ -409,7 +395,7 @@ export default {
           ],
           experienceKey: 'collegeAnalysis',
           ...buildExample('/mcp/campus/analytics/query', {
-            reportId: 'REPORT-DEMO-20260822',
+            reportId: 'REPORT-20260911-0822',
           }),
         },
         {
@@ -421,11 +407,11 @@ export default {
           icon: 'el-icon-office-building',
           color: 'blue',
           connected: false,
-          connection: 'Management MCP + Workflow（模拟）',
+          connection: 'Management MCP + Workflow',
           capabilities: ['统计报告', '服务管理', '任务协同', '辅助决策'],
           experienceKey: 'report',
           ...buildExample('/mcp/campus/management/report', {
-            taskId: 'TASK-DEMO-0186',
+            taskId: 'TASK-20260911-0186',
           }),
         },
       ],

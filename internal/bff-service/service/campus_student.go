@@ -23,12 +23,11 @@ const (
 var campusLocation = time.FixedZone("Asia/Shanghai", 8*60*60)
 
 type campusStudentData struct {
-	Profile      response.CampusStudentProfile
-	Courses      []response.CampusStudentCourse
-	Exams        []response.CampusStudentExam
-	Scores       []response.CampusStudentScore
-	Tasks        []response.CampusStudentTask
-	LeaveRecords []response.CampusStudentLeaveRecord
+	Profile response.CampusStudentProfile
+	Courses []response.CampusStudentCourse
+	Exams   []response.CampusStudentExam
+	Scores  []response.CampusStudentScore
+	Tasks   []response.CampusStudentTask
 }
 
 // ResolveActualCampusRole resolves only the exact role names returned by IAM.
@@ -154,12 +153,7 @@ func GetCampusStudentLearningAnalysis(orgID, userID, term string) response.Campu
 }
 
 func GetCampusStudentLeaveRecords(orgID, userID string) ([]response.CampusStudentLeaveRecord, error) {
-	records, err := ListCampusLeaves(CampusBusinessExecutionIdentity{UserID: userID, OrgID: orgID, ActualRole: CampusRoleStudent})
-	if err != nil || len(records) > 0 {
-		return records, err
-	}
-	data := buildCampusStudentData(orgID, userID, time.Now().In(campusLocation))
-	return data.LeaveRecords, nil
+	return ListCampusLeaves(CampusBusinessExecutionIdentity{UserID: userID, OrgID: orgID, ActualRole: CampusRoleStudent})
 }
 
 func buildCampusStudentData(orgID, userID string, now time.Time) campusStudentData {
@@ -204,10 +198,6 @@ func buildCampusStudentData(orgID, userID string, now time.Time) campusStudentDa
 		Tasks: []response.CampusStudentTask{
 			{TaskID: fmt.Sprintf("TASK-%08d-01", seed%100000000), Title: "完成数据结构章节练习", Type: "homework", CourseName: "数据结构", DueAt: now.AddDate(0, 0, 2).Format("2006-01-02 20:00"), Status: "pending"},
 			{TaskID: fmt.Sprintf("TASK-%08d-02", seed%100000000), Title: "确认考试安排", Type: "notice", DueAt: now.AddDate(0, 0, 5).Format("2006-01-02 18:00"), Status: "pending"},
-		},
-		LeaveRecords: []response.CampusStudentLeaveRecord{
-			{ApplicationNo: fmt.Sprintf("LV-%08d-01", seed%100000000), StartTime: now.AddDate(0, 0, -12).Format("2006-01-02 14:00"), EndTime: now.AddDate(0, 0, -12).Format("2006-01-02 18:00"), LeaveType: "事假", Reason: "个人事务", Status: "approved", StatusText: "已通过", CreatedAt: now.AddDate(0, 0, -14).Format("2006-01-02 10:20")},
-			{ApplicationNo: fmt.Sprintf("LV-%08d-02", seed%100000000), StartTime: now.AddDate(0, 0, 3).Format("2006-01-02 08:00"), EndTime: now.AddDate(0, 0, 3).Format("2006-01-02 12:00"), LeaveType: "病假", Reason: "身体不适", Status: "pending", StatusText: "审批中", CreatedAt: now.AddDate(0, 0, -1).Format("2006-01-02 16:45")},
 		},
 	}
 }

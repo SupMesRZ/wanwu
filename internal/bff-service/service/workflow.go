@@ -8,6 +8,7 @@ import (
 	"io"
 	net_url "net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -51,6 +52,14 @@ func ListLlmModelsByWorkflow(ctx *gin.Context, userId, orgId, modelT string) (*r
 
 // ListWorkflow userID/orgID数据隔离，用于【工作流】
 func ListWorkflow(ctx *gin.Context, orgID, name, appType string) (*response.CozeWorkflowListData, error) {
+	return listWorkflow(ctx, orgID, name, appType, true)
+}
+
+func ListWorkflowInOrg(ctx *gin.Context, orgID, name, appType string) (*response.CozeWorkflowListData, error) {
+	return listWorkflow(ctx, orgID, name, appType, false)
+}
+
+func listWorkflow(ctx *gin.Context, orgID, name, appType string, loginUserCreate bool) (*response.CozeWorkflowListData, error) {
 	switch appType {
 	case constant.AppTypeWorkflow:
 		appType = "0"
@@ -66,7 +75,7 @@ func ListWorkflow(ctx *gin.Context, orgID, name, appType string) (*response.Coze
 		SetHeader("Accept", "application/json").
 		SetHeaders(workflowHttpReqHeader(ctx)).
 		SetQueryParams(map[string]string{
-			"login_user_create": "true",
+			"login_user_create": strconv.FormatBool(loginUserCreate),
 			"space_id":          orgID,
 			"name":              name,
 			"page":              "1",

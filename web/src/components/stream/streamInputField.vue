@@ -133,6 +133,30 @@
               @setFile="setFile"
             ></streamUploadField>
             <el-divider v-if="visibleUpload" direction="vertical"></el-divider>
+            <el-tooltip
+              v-if="visibleVoice"
+              :content="voiceListening ? '停止语音输入' : '语音输入'"
+              placement="top"
+            >
+              <el-button
+                native-type="button"
+                circle
+                plain
+                :class="['editable-voice-btn', { listening: voiceListening }]"
+                :aria-label="voiceListening ? '停止语音输入' : '开始语音输入'"
+                :aria-pressed="voiceListening"
+                :disabled="sessionStatus === 0"
+                @click="toggleVoiceInput"
+              >
+                <i
+                  :class="
+                    voiceListening
+                      ? 'el-icon-turn-off-microphone'
+                      : 'el-icon-microphone'
+                  "
+                ></i>
+              </el-button>
+            </el-tooltip>
             <el-button class="editable-send-btn" circle plain @click="preSend">
               <svg class="editable-send-icon">
                 <use xlink:href="#icon-chatSend" />
@@ -203,6 +227,7 @@ export default {
     hasHistory: { type: Boolean, default: false },
     visibleClearHistory: { type: Boolean, default: true },
     visibleUpload: { type: Boolean, default: true },
+    visibleVoice: { type: Boolean, default: false },
     maxImageSize: {
       type: [Number, String],
       required: false,
@@ -264,6 +289,8 @@ export default {
       _resizeObserver: null, // 输入框尺寸变化监听器
       isMultiLine: false,
       breakLength: 0, //记录触发换行时的字符长度
+      voiceListening: false,
+      voiceRecognition: null,
     };
   },
   watch: {
@@ -386,6 +413,9 @@ export default {
     }
     if (typeof this.dragCleanup === 'function') {
       this.dragCleanup();
+    }
+    if (this.voiceRecognition) {
+      this.voiceRecognition.abort();
     }
   },
   methods: {
@@ -644,6 +674,17 @@ export default {
         .replaceAll('{', '<div class="light-input" contenteditable="true">')
         .replaceAll('}', '</div>');
     },
+    setPlainPrompt(data) {
+      this.promptValue = data;
+      this.$refs.editor.textContent = data;
+      this.$refs.editor.focus();
+      const range = document.createRange();
+      const selection = window.getSelection();
+      range.selectNodeContents(this.$refs.editor);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    },
     getPrompt() {
       if (this.supportReminder) {
         if (this.$refs.editor.innerHTML === '/') {
@@ -748,7 +789,71 @@ export default {
         return false;
       }
     },
+    toggleVoiceInput() {
+      if (this.voiceListening) {
+        this.voiceRecognition.stop();
+        return;
+      }
+
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        this.$emit('voice-state', 'unrecognized');
+        this.$message.warning(
+          '当前浏览器不支持语音输入，请使用 Chrome 或 Edge',
+        );
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      const originalPrompt = this.getPrompt().trim();
+      let voiceOutcome = false;
+      recognition.lang = 'zh-CN';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.onstart = () => {
+        this.voiceListening = true;
+        this.$emit('voice-state', 'listening');
+      };
+      recognition.onresult = event => {
+        const results = Array.from(event.results);
+        const transcript = results
+          .map(result => result[0].transcript)
+          .join('')
+          .trim();
+        this.setPlainPrompt(
+          [originalPrompt, transcript].filter(Boolean).join(' '),
+        );
+        if (transcript && results.some(result => result.isFinal)) {
+          voiceOutcome = true;
+          this.$emit('voice-state', 'success');
+        }
+      };
+      recognition.onerror = event => {
+        if (event.error === 'aborted') return;
+        voiceOutcome = true;
+        this.$emit(
+          'voice-state',
+          event.error === 'no-speech' ? 'doubt' : 'unrecognized',
+        );
+        if (event.error !== 'no-speech') {
+          this.$message.warning(
+            event.error === 'not-allowed'
+              ? '请允许浏览器使用麦克风'
+              : '语音识别失败，请重试',
+          );
+        }
+      };
+      recognition.onend = () => {
+        this.voiceListening = false;
+        this.voiceRecognition = null;
+        if (!voiceOutcome) this.$emit('voice-state', 'idle');
+      };
+      this.voiceRecognition = recognition;
+      recognition.start();
+    },
     preSend() {
+      if (this.voiceRecognition) this.voiceRecognition.stop();
       this.hasFile = false;
       this.$emit('preSend');
     },
@@ -1213,6 +1318,35 @@ export default {
     width: 18px;
     height: 18px;
     fill: currentColor;
+  }
+}
+
+.editable-voice-btn {
+  padding: 8px;
+  color: #64748b;
+  line-height: 0;
+  border: 0;
+
+  &:hover,
+  &.listening {
+    color: #1559c5;
+    background: #eaf3ff !important;
+  }
+
+  &.listening {
+    animation: voice-pulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes voice-pulse {
+  50% {
+    box-shadow: 0 0 0 5px rgba(21, 89, 197, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editable-voice-btn.listening {
+    animation: none;
   }
 }
 </style>

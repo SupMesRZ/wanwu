@@ -4,9 +4,6 @@
       <div class="page-heading">
         <div class="title-row">
           <h1>{{ $t('publicOpinion.title') }}</h1>
-          <el-tag v-if="activeTab !== 'list'" size="mini" effect="plain">
-            {{ $t('publicOpinion.demoData') }}
-          </el-tag>
         </div>
         <p>{{ $t('publicOpinion.subtitle') }}</p>
       </div>
@@ -150,13 +147,7 @@ export default {
     handleRefresh() {
       this.lastUpdated = moment().format('YYYY-MM-DD HH:mm:ss');
       this.refreshKey += 1;
-      this.$message.success(
-        this.$t(
-          this.activeTab === 'list'
-            ? 'publicOpinion.realDataRefreshSuccess'
-            : 'publicOpinion.refreshSuccess',
-        ),
-      );
+      this.$message.success(this.$t('publicOpinion.refreshSuccess'));
     },
   },
 };

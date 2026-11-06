@@ -1811,6 +1811,14 @@ export default {
           }
         },
       });
+      this.eventSource.catch(error => {
+        console.error('[sse] connection failed', {
+          url: this.origin + this.sseApi,
+          status: error?.status,
+          message: error?.message || error,
+        });
+        this.setStoreSessionStatus(-1);
+      });
     },
     // 更新子会话的用户操作状态
     connectEventSource({

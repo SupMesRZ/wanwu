@@ -1,0 +1,13 @@
+{
+  "gateType": "runtime-only",
+  "decision": "pass",
+  "reviewer": "Codex",
+  "reason": "现有单帧透明 PNG 配合 CSS 面屏和缩放动画，无批量生成媒体；Pilot 以真实页面生产构建代替视频门槛。",
+  "evidence": {
+    "asset": "../../../../../assets/imgs/hexiaozhi-digital-human.png",
+    "assetSha256": "a85827cf1b05bdaca24e84b40dd22d12fa1a5cb5f15d20b618161866f02aef81",
+    "component": "../../index.vue",
+    "componentSha256": "1cc2e788a2a794cd13b85456d86d2e5124dd17fd5947f52636879cd6477a3077",
+    "productionBuild": "pass"
+  }
+}

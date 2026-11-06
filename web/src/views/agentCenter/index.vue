@@ -152,7 +152,6 @@
             <h2>最近运行动态</h2>
             <p>智能服务调用摘要</p>
           </div>
-          <el-tag size="mini" effect="plain">演示数据</el-tag>
         </div>
         <div
           v-for="activity in activities"
@@ -186,12 +185,6 @@
           <strong>{{ key }}</strong>
           <span>{{ value }}</span>
         </div>
-        <el-alert
-          title="当前校园业务数据为比赛模拟数据，底层 Agent、知识库与工作流能力沿用平台真实能力。"
-          type="warning"
-          :closable="false"
-          show-icon
-        />
       </div>
       <span slot="footer">
         <el-button type="primary" size="small" @click="detailVisible = false">

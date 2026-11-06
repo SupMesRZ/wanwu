@@ -1,0 +1,46 @@
+# Gitee Go 流水线：后端编译测试 + 前端构建
+# 触发：master 推送。流水线创建后在 Gitee 仓库「Gitee Go」页首次运行时核对
+version: '1.0'
+name: scenic-ai-guide-ci
+displayName: 后端测试与前端构建
+triggers:
+  trigger: auto
+  push:
+    branches:
+      precise:
+        - master
+stages:
+  - stage:
+      name: backend-test
+      displayName: 后端编译与测试
+      strategy: naturally
+      trigger: auto
+      steps:
+        - step: build@maven
+          name: maven-test
+          displayName: Maven 编译与全部默认测试
+          jdkVersion: 21
+          commands:
+            - java -version
+            - mvn -v
+            # none 模式让上下文不需要真实 LLM 密钥（注册占位 ChatModel），集成层不受影响
+            # 集成层走 Testcontainers，需要构建环境有 Docker daemon
+            # 若 Gitee Go 构建环境无 Docker，改用：
+            #   mvn -B clean test "-Dsurefire.excludedGroups=external,integration"
+            - APP_AI_CHAT_MODEL=none APP_AI_EMBEDDING_MODEL=none mvn -B clean test
+  - stage:
+      name: frontend-build
+      displayName: 前端构建
+      strategy: naturally
+      trigger: auto
+      steps:
+        - step: build@nodejs
+          name: frontend-build
+          displayName: 前端依赖安装与产物构建
+          nodeVersion: 20
+          caches:
+            - ~/.npm
+          commands:
+            - npm config set registry https://registry.npmmirror.com
+            # 高德 key 构建期缺省为空串，地图功能在 CI 产物中不可用但构建不失败
+            - cd front && npm ci && npm run build

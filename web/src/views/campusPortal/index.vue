@@ -31,7 +31,6 @@
             <h2>{{ page.listTitle }}</h2>
             <p>{{ page.listDescription }}</p>
           </div>
-          <el-tag size="mini" effect="plain">演示数据</el-tag>
         </div>
         <div class="item-list">
           <div v-for="item in page.items" :key="item.title">
@@ -285,7 +284,7 @@ const pages = {
       },
     ],
     listTitle: '河小智学习建议',
-    listDescription: '根据演示学习记录生成，仅作产品效果展示',
+    listDescription: '根据近期学习记录生成个性化建议',
     items: [
       {
         time: '重点',

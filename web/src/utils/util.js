@@ -19,7 +19,14 @@ export function guid() {
   );
 }
 
-export const getXClientId = () => localStorage.getItem('xClientId');
+export const getXClientId = () => {
+  let clientId = localStorage.getItem('xClientId');
+  if (!clientId) {
+    clientId = guid();
+    localStorage.setItem('xClientId', clientId);
+  }
+  return clientId;
+};
 
 // 用于登录切组织等找到有权限的第一个菜单路径
 export const fetchPermFirPath = (list = menuList) => {

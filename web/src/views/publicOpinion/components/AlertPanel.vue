@@ -5,9 +5,6 @@
         <h2>{{ $t('publicOpinion.alert.title') }}</h2>
         <p>{{ $t('publicOpinion.alert.description') }}</p>
       </div>
-      <el-tag size="small" effect="plain">
-        {{ $t('publicOpinion.demoData') }}
-      </el-tag>
     </header>
 
     <div class="alert-list">

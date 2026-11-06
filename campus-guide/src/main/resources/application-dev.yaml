@@ -1,0 +1,15 @@
+# 开发环境专属配置
+security:
+  # dev 模式全部放行，只解析 token 不拦截，等接口开发完毕后改 true 收口
+  strict-mode: true
+
+# SpringDoc OpenAPI（开发环境暴露接口文档）
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId}] %logger{36} - %msg%n"

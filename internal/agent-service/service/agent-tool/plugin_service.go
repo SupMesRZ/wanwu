@@ -318,6 +318,7 @@ var campusWorkflowCodes = map[string]struct{}{
 	"teacher_course_adjustment":           {},
 	"academic_course_adjustment_approval": {},
 	"student_leave_full_process":          {},
+	"student_leave_completion_workflow":   {},
 }
 
 func routeCampusWorkflow(ctx context.Context, workflowCode, arguments string) (string, string, map[string]string, bool, error) {

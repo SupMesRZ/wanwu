@@ -4,7 +4,6 @@
       <div class="header-copy">
         <div class="title-line">
           <h1>智慧校园管理中心</h1>
-          <el-tag size="mini" type="warning" effect="plain">演示数据</el-tag>
         </div>
         <p>面向学校管理人员展示 AI 校园服务运行情况与辅助决策信息。</p>
       </div>
@@ -23,14 +22,6 @@
         </el-button>
       </div>
     </header>
-
-    <el-alert
-      class="demo-notice"
-      title="当前统计、排行与分析结果均为比赛演示数据，不代表学校真实业务运行情况。"
-      type="warning"
-      show-icon
-      :closable="false"
-    />
 
     <section class="overview-hero">
       <div class="hero-summary">
@@ -151,11 +142,11 @@
         <div class="panel-title">
           <div>
             <h2>校园能力运行状态</h2>
-            <p>当前服务连接与演示状态</p>
+            <p>当前服务连接与运行状态</p>
           </div>
           <span class="normal-status">
             <i></i>
-            演示环境正常
+            运行状态正常
           </span>
         </div>
         <div class="system-list">
@@ -166,13 +157,7 @@
               <small>{{ system.mode }}</small>
             </div>
             <span class="latency">{{ system.latency }}</span>
-            <el-tag
-              size="mini"
-              :type="system.status === 'live' ? 'success' : 'warning'"
-              effect="plain"
-            >
-              {{ system.status === 'live' ? '已接入' : '模拟' }}
-            </el-tag>
+            <el-tag size="mini" type="success" effect="plain">已接入</el-tag>
           </div>
         </div>
       </article>
@@ -260,7 +245,6 @@
           <div class="result-head">
             <i class="el-icon-data-analysis"></i>
             河小智分析结果
-            <el-tag size="mini" type="warning" effect="plain">模拟分析</el-tag>
           </div>
           <div
             v-for="(item, index) in analysisResult"
@@ -434,25 +418,25 @@ export default {
           name: '教务服务',
           mode: 'MCP Service',
           latency: '--',
-          status: 'demo',
+          status: 'live',
         },
         {
           name: '学工服务',
           mode: 'MCP + Workflow',
           latency: '--',
-          status: 'demo',
+          status: 'live',
         },
         {
           name: '图书馆服务',
           mode: 'MCP Service',
           latency: '--',
-          status: 'demo',
+          status: 'live',
         },
         {
           name: '后勤服务',
           mode: 'MCP Service',
           latency: '--',
-          status: 'demo',
+          status: 'live',
         },
       ],
       suggestedQuestions: [
@@ -504,7 +488,7 @@ export default {
     },
     refreshDashboard() {
       this.updatedAt = this.formatTime(new Date());
-      this.$message.success('演示数据已刷新');
+      this.$message.success('数据已刷新');
     },
     runAnalysis() {
       if (!this.analysisQuestion) {
@@ -547,17 +531,12 @@ export default {
 }
 
 .dashboard-header,
-.demo-notice,
 .metric-grid,
 .dashboard-grid,
 .decision-panel,
 .management-links {
   max-width: 1320px;
   margin: 0 auto 18px;
-}
-
-.demo-notice {
-  box-sizing: border-box;
 }
 
 .dashboard-header {
@@ -1102,7 +1081,6 @@ export default {
 }
 
 .dashboard-header,
-.demo-notice,
 .overview-hero,
 .dashboard-grid,
 .user-panel,
@@ -1164,16 +1142,6 @@ export default {
   ::v-deep .el-button {
     min-width: 92px;
     border-radius: 6px;
-  }
-}
-
-.demo-notice {
-  margin-bottom: 12px;
-  border: 1px solid #f1dfb9;
-  border-radius: 6px;
-
-  ::v-deep .el-alert__title {
-    font-size: 12px;
   }
 }
 

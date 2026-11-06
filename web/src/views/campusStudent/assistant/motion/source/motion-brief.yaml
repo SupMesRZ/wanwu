@@ -1,0 +1,32 @@
+concept_contract: source/concept-contract.yaml
+identity_bible: source/identity-bible.md
+parameter_space: circular
+media_access: sequential
+gesture_policy: null
+storyboard:
+  - F0 低位准备：手臂自然放下，天线略向左倾
+  - F1 上升抬手：高度逐渐上升，一只手臂开始抬起
+  - F2 继续升高：手臂抬起更多，天线渐回中间
+  - F3 高位轻摆：达到最高位，手臂轻摆两次，天线向右倾
+  - F4 下降放手：缓慢下降，手臂和天线回到自然状态
+  - F5 低位完成：与首帧一致，无硬切地进入下一循环
+  - K0 待机：发光圆角方框和内侧窄条光核，保持中空中心；身体处于呼气末端
+  - K1 吸气：身体放大，保持身份与中心锚点
+  - K2 眨眼：两眼同步绕中心压缩成短横线，再自然张开；独立于身体浮动循环
+  - K3 视线：依次轻看左、右、上、下，每次转移后短暂停留并回到中间
+  - K4 回到待机并闭环
+  - B0 背景呼吸：浅蓝光晕随角色吸气放大、呼气收敛
+  - B1 光带漂移：白色柔光带低幅度缓慢掠过页面
+  - B2 粒子静置：少量高光粒子保持近乎静止，避免抢主体焦点
+keyframes: 由现有透明 PNG、SVG 眼部轮廓与光核、CSS 眨眼和视线动画确定性渲染，不生成位图关键帧
+clip_chain: 复用既有时间轴的单一闭环，浮动与手臂、天线、光影同步；CSS 连续插值，不切换图片源
+rest_state: idle
+loop: closed
+anchor: center
+scene_continuity: 页面浅蓝校园氛围由 CSS 光晕、光带和粒子表达；背景与角色同周期但幅度更低
+frame_policy: native
+target_fps: 60
+quality_target: 384x384 Alpha PNG；覆盖 192x192 CSS 像素、DPR 2
+aspect_ratio: 1:1
+pixel_dimensions: 384x384
+reduced_motion: 静态低位 idle 表情，关闭角色、光影、粒子及背景的全部动画

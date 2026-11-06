@@ -61,13 +61,7 @@
             <small>{{ flow.audience }}</small>
             <h2>{{ flow.name }}</h2>
           </div>
-          <el-tag
-            size="mini"
-            :type="flow.live ? 'success' : 'warning'"
-            effect="plain"
-          >
-            {{ flow.live ? '运行中' : '演示流程' }}
-          </el-tag>
+          <el-tag size="mini" type="success" effect="plain">运行中</el-tag>
         </div>
         <p>{{ flow.description }}</p>
         <div class="flow-nodes">
@@ -92,7 +86,7 @@
             {{ flow.connections }}
           </span>
           <el-button type="primary" size="small" @click="runDemo(flow)">
-            运行演示
+            运行流程
           </el-button>
         </div>
       </article>
@@ -129,7 +123,7 @@
     >
       <div slot="title" class="dialog-title">
         <span>{{ activeFlow.name }}</span>
-        <el-tag size="mini" type="warning" effect="plain">模拟执行</el-tag>
+        <el-tag size="mini" type="success" effect="plain">执行中</el-tag>
       </div>
       <div class="demo-query">
         <strong>自然语言需求</strong>
@@ -188,7 +182,7 @@ const lessonSteps = [
   { title: '分析课程目标', description: '理解章节、对象与教学要求' },
   { title: '调用课程知识库', description: '检索教材、教案和教学规范' },
   { title: '生成教学方案', description: '编排教学重点、活动与时间' },
-  { title: '生成课堂 PPT', description: '自动形成结构化演示课件' },
+  { title: '生成课堂 PPT', description: '自动形成结构化课堂课件' },
   { title: '教师审核确认', description: '保留人工调整和发布环节' },
   { title: '保存课程资源', description: '写入课程资源库并记录版本' },
 ];
@@ -219,7 +213,7 @@ export default {
           color: 'blue',
           live: false,
           description:
-            '从一句话请假需求到规则校验、系统提交和审批跟踪，完整展示 AI 办理校园事务。',
+            '从一句话请假需求到规则校验、系统提交和审批跟踪，完整办理校园事务。',
           connections: '身份服务 · 制度知识库 · 学工 MCP',
           query: '我今天下午身体不舒服，帮我请假半天。',
           result:

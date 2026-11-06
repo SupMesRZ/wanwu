@@ -1,0 +1,68 @@
+{
+  "name": "图书馆与知识服务内容包",
+  "generatedAt": "2026-09-16T17:07:38+08:00",
+  "contentStatus": "imported_bound_and_published",
+  "dataScope": "AI-generated demo rules and general guides; not official university policy",
+  "csvColumns": [
+    "question",
+    "answer"
+  ],
+  "topics": [
+    {
+      "knowledgeName": "图书馆开放与入馆服务知识库",
+      "document": "01-图书馆开放与入馆服务.md",
+      "qaCsv": "01-图书馆开放与入馆服务.csv",
+      "qaCount": 12
+    },
+    {
+      "knowledgeName": "图书借阅与读者账号知识库",
+      "document": "02-图书借阅与读者账号.md",
+      "qaCsv": "02-图书借阅与读者账号.csv",
+      "qaCount": 12
+    },
+    {
+      "knowledgeName": "馆藏检索与文献获取知识库",
+      "document": "03-馆藏检索与文献获取.md",
+      "qaCsv": "03-馆藏检索与文献获取.csv",
+      "qaCount": 12
+    },
+    {
+      "knowledgeName": "电子资源与数据库使用知识库",
+      "document": "04-电子资源与数据库使用.md",
+      "qaCsv": "04-电子资源与数据库使用.csv",
+      "qaCount": 12
+    },
+    {
+      "knowledgeName": "学习支持与学术信息素养知识库",
+      "document": "05-学习支持与学术信息素养.md",
+      "qaCsv": "05-学习支持与学术信息素养.csv",
+      "qaCount": 12
+    },
+    {
+      "knowledgeName": "校园办事指南与通知查询知识库",
+      "document": "06-校园办事指南与通知查询.md",
+      "qaCsv": "06-校园办事指南与通知查询.csv",
+      "qaCount": 12
+    }
+  ],
+  "totalQaCount": 72,
+  "platformImport": {
+    "orgId": "1",
+    "userId": "1",
+    "embeddingModelId": "2",
+    "knowledgeBases": 6,
+    "qaBases": 6,
+    "uploadedDocuments": 6,
+    "uploadedQaCsvFiles": 6,
+    "successfulQaPairs": 72,
+    "recordsFile": "platform-import.json",
+    "parsedDocuments": 6,
+    "documentSegments": 78,
+    "enabledQaPairs": 72,
+    "verifiedAt": "2026-09-16T17:27:13+08:00",
+    "qaContentMatchesCsv": true,
+    "retrievalVerification": "First topic document and QA hybrid searches passed",
+    "applicationBindingChanged": true,
+    "bindingReport": "platform-binding.json"
+  }
+}

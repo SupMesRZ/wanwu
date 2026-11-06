@@ -1,0 +1,54 @@
+{
+  "updatedAt": "2026-09-16T17:44:02+08:00",
+  "rag": {
+    "appId": "2078761335599927296",
+    "version": "v0.1.3",
+    "publishType": "public",
+    "documentLibraries": 7,
+    "qaLibraries": 6,
+    "preservedExistingPolicyLibrary": true
+  },
+  "assistants": [
+    {
+      "assistantId": "1",
+      "version": "v1.0.5",
+      "role": "student",
+      "documentLibraries": 6
+    },
+    {
+      "assistantId": "4",
+      "version": "v1.0.4",
+      "role": "teacher",
+      "documentLibraries": 6
+    },
+    {
+      "assistantId": "5",
+      "version": "v1.0.1",
+      "role": "academic",
+      "documentLibraries": 6
+    }
+  ],
+  "verification": {
+    "publishedBindingsChecked": true,
+    "runtimeKnowledgeParametersCheckedForAllThreeRoles": true,
+    "publishedRagOpeningHoursVerifiedFor": [
+      {
+        "userId": "4",
+        "orgId": "3"
+      },
+      {
+        "userId": "5",
+        "orgId": "2"
+      },
+      {
+        "userId": "6",
+        "orgId": "8"
+      }
+    ],
+    "openingHoursAnswerRetainedDemoRuleLabel": true,
+    "fullCampusAssistantStreamVerified": false,
+    "fullCampusAssistantStreamLimitation": "Direct gRPC test lacks the authenticated execution metadata required by campus MCP tools; role parameter checks and published RAG answers passed."
+  },
+  "removedCompetitionSimulationFromCurrentAssistantDescriptions": true,
+  "campusKnowledgeManagementPermissionsChanged": false
+}

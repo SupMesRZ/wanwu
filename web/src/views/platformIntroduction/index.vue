@@ -34,7 +34,7 @@
             河小智不只是对话助手，而是连接校园知识、业务系统与管理分析的统一入口。
           </p>
         </div>
-        <el-tag size="small" effect="plain">比赛演示主线</el-tag>
+        <el-tag size="small" effect="plain">统一服务链路</el-tag>
       </div>
       <div class="flow-grid">
         <article v-for="(item, index) in serviceFlow" :key="item.title">
@@ -49,8 +49,8 @@
     <section class="section-card demo-section">
       <div class="section-heading">
         <div>
-          <span class="section-kicker">QUICK DEMO</span>
-          <h2>按角色开始演示</h2>
+          <span class="section-kicker">QUICK ACCESS</span>
+          <h2>按角色进入服务</h2>
           <p class="section-description">{{ demoDescription }}</p>
         </div>
       </div>
@@ -192,7 +192,7 @@ export default {
           key: 'adminDashboard',
           audience: '学校管理人员',
           title: '智慧校园管理中心',
-          description: '查看演示运行数据、服务热点和 AI 辅助决策。',
+          description: '查看运行数据、服务热点和 AI 辅助决策。',
           icon: 'el-icon-data-line',
           color: 'orange',
           location: { path: '/adminDashboard' },
@@ -228,7 +228,7 @@ export default {
     },
     demoDescription() {
       if (this.canPreviewAllRoles) {
-        return '管理员可直接切换三类角色，建议按“角色体验 → 能力连接 → 管理分析”的顺序讲解。';
+        return '管理员可直接切换三类角色，查看对应服务入口。';
       }
       return this.currentCampusRole
         ? `已按${this.currentCampusRole.label}身份展示可用入口。`
